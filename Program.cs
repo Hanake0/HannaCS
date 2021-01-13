@@ -8,6 +8,7 @@ namespace Hanna
         {
             Bot Hanna = new Bot();
             Hanna.RunAsyn().GetAwaiter().ConfigAwait(false);
+
         }
     }
 }
