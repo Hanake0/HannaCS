@@ -25,6 +25,7 @@ namespace Hanna
                 TokenType = TokenType.Bot,
                 AutoReconnect = true,
                 MinimumLogLevel = LogLevel.Debug,
+                
             };
             Client = new DiscordClient(clientConfigs);
             Client.Ready += OnReady;
@@ -35,11 +36,15 @@ namespace Hanna
                 StringPrefixes = new string[] { Environment.GetEnvironmentVariable("PREFIX") },
                 EnableMentionPrefix = true,
                 EnableDms = true,
+                CaseSensitive = false,
+                IgnoreExtraArguments = true,
+
             };
             Commands = Client.UseCommandsNext(commandsConfig);
 
-            await Client.ConnectAsync();
+            Commands.RegisterCommands<Util>();
 
+            await Client.ConnectAsync();
             await Task.Delay(-1);
         }
 
