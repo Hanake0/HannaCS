@@ -1,14 +1,12 @@
-﻿using System;
-
-namespace Hanna
+﻿namespace Hanna
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Bot Hanna = new Bot();
-            Hanna.RunAsyn().GetAwaiter().ConfigAwait(false);
+	class Program
+	{
+		static void Main(string[] args)
+		{
+			Bot Hanna = new Bot();
+			Hanna.RunAsync().GetAwaiter().GetResult();
 
-        }
-    }
+		}
+	}
 }
