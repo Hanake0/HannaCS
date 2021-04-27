@@ -52,8 +52,8 @@ namespace Hanna
 			});
 
 			// Registra as classes de comandos
-			this.Commands.RegisterCommands<Util>();
 			this.Commands.RegisterCommands<ShopCommand>();
+			this.Commands.RegisterCommands<Util>();
 
 			await this.Client.ConnectAsync();
 			await Task.Delay(-1);

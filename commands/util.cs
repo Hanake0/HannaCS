@@ -3,6 +3,8 @@
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 
+using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Hanna.Commands
@@ -23,16 +25,29 @@ namespace Hanna.Commands
 		[Description("Comandinho de teste uwu")]
 		public async Task Teste(CommandContext ctx)
 		{
-			await ctx.TriggerTypingAsync().ConfigureAwait(false);
-			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
-				.WithAuthor("au au", null, "https://www.hojeemdia.com.br/polopoly_fs/1.570196!/image/image.jpg_gen/derivatives/landscape_653/image.jpg")
-				.WithColor(new DiscordColor("#0e820a"))
-				.WithDescription("olha! uma descrição!")
-				.WithFooter("olha! um texto de footer!")
-				.WithTimestamp(System.DateTime.Now)
-				.AddField("olha, um nome de campo", "olha um valor");
+			for(; ; )
+			{
+				WebRequest request = WebRequest.Create("https://musentm.vercel.app/api/test");
+				
+				HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+				request.Credentials = CredentialCache.DefaultCredentials;
 
-			await ctx.RespondAsync(embed);
+
+				string responseString;
+				using (Stream dataStream = response.GetResponseStream())
+				{
+					StreamReader reader = new StreamReader(dataStream);
+					responseString = reader.ReadToEnd();
+				}
+
+				await ctx.RespondAsync($"StatusCode: {response.StatusCode}: `{response.StatusDescription}`\n" +
+					$"Tipo de resposta: {response.ContentType}\n" +
+					$"Tamanho da resposta: {response.ContentLength}\n" +
+					$"Resposta: {responseString}\n");
+				response.Close();
+
+				await Task.Delay(System.TimeSpan.FromSeconds(10));
+			}
 		}
 
 		[Command("avatar"), Aliases("perfil")]
