@@ -49,6 +49,14 @@ namespace Hanna.Commands
 		}
 
 		[Command("avatar"), Aliases("perfil")]
+		public async Task Avatar(CommandContext ctx,
+		[Description("O dono da imagem")] DiscordUser usuário)
+		{
+			await ctx.TriggerTypingAsync().ConfigureAwait(false);
+			await ctx.RespondAsync(usuário.AvatarUrl);
+		}
+
+		[Command("avatar")]
 		[Description("Envia a imagem de perfil do usuário")]
 		public async Task Avatar(CommandContext ctx)
 		{
@@ -56,13 +64,6 @@ namespace Hanna.Commands
 			await ctx.RespondAsync(ctx.User.AvatarUrl);
 		}
 
-		[Command("avatar")]
-		public async Task Avatar(CommandContext ctx,
-			[Description("O dono da imagem")] DiscordUser usuário)
-		{
-			await ctx.TriggerTypingAsync().ConfigureAwait(false);
-			await ctx.RespondAsync(usuário.AvatarUrl);
-		}
 
 		[Command("say"), Aliases("diga")]
 		public async Task Say(CommandContext ctx,
