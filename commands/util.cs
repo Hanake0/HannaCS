@@ -9,8 +9,6 @@ using System.Threading.Tasks;
 
 namespace Hanna.Commands
 {
-	[Group("Util")]
-	[Description("Comandos úteis")]
 	public class Util : BaseCommandModule
 	{
 		[Command("ping")]
@@ -64,6 +62,15 @@ namespace Hanna.Commands
 		{
 			await ctx.TriggerTypingAsync().ConfigureAwait(false);
 			await ctx.RespondAsync(usuário.AvatarUrl);
+		}
+
+		[Command("say"), Aliases("diga")]
+		public async Task Say(CommandContext ctx,
+			[Description("O texto á dizer"), RemainingText] string text)
+		{
+			_ = ctx.Message.DeleteAsync();
+			await ctx.TriggerTypingAsync();
+			await ctx.RespondAsync(text);
 		}
 	}
 }

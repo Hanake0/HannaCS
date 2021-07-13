@@ -117,7 +117,7 @@ namespace Hanna.Commands
 				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png");
 
 			// Separa os emojis
-			List<DiscordEmoji> emojis = new List<DiscordEmoji>
+			List<DiscordEmoji> emojis = new()
 			{
 				DiscordEmoji.FromName(ctx.Client, ":art:"),
 				DiscordEmoji.FromName(ctx.Client, ":ticket:"),
@@ -166,7 +166,7 @@ namespace Hanna.Commands
 
 			// Envia o embed
 			builder
-				.WithColor(itens.First().DiscColor)
+				.WithColor(itens.Length!=0 ? itens.First().DiscColor : new DiscordColor("#000000"))
 				.WithAuthor($"{category} {new string(' ', builder.Fields.Count * 15)} {index + 1}/{(int)Math.Ceiling((decimal)count / 3)}", null, this.Manager.GetImageUrl(ctx, category))
 				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
 				.WithTimestamp(DateTime.Now);

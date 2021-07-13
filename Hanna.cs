@@ -59,11 +59,11 @@ namespace Hanna
 			await Task.Delay(-1);
 		}
 
-		private Task OnReady(DiscordClient client, ReadyEventArgs args)
+		private async Task<Task> OnReady(DiscordClient client, ReadyEventArgs args)
 		{
 			return Task.Run(async () =>
 			{
-				DiscordChannel channel = await client.GetChannelAsync(796029220307337266);
+				DiscordChannel channel = await client.GetChannelAsync(828494435469623356);
 
 				await channel.SendMessageAsync("on the line :sunglasses:");
 			});

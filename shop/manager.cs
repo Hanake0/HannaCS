@@ -23,7 +23,7 @@ namespace Hanna.Shop
 			{
 				/*
 				new Color(ctx, "Padrão", Category.Cores, new string[] { "padrao", "padrão", "default", "normal" },
-					000, new DiscordColor(), 796475284260913233, "Cor padrão do server"
+					000, new DiscordColor(), 851195394494693388, "Cor padrão do server"
 				),
 				*/
 				new Color
@@ -33,8 +33,8 @@ namespace Hanna.Shop
 					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f33a.png",
 					Emoji = DiscordEmoji.FromName(ctx.Client, ":hibiscus:"),
 					Category = Category.Cores, DefValue = 2000,
-					Role = ctx.Client.Guilds[795053938666766366].Roles[800459707361132604],
-					Description = "Poderá usar a cor <@&800459707361132604>\n no servidor, através do comando `hcor`.",
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = $"Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
 				},
 				new Color
 				{
@@ -43,8 +43,8 @@ namespace Hanna.Shop
 					ImageLink = "https://images.emojiterra.com/twitter/v13.0/512px/1fa70.png",
 					Emoji = DiscordEmoji.FromName(ctx.Client, ":ballet_shoes:"),
 					Category = Category.Cores, DefValue = 2000,
-					Role = ctx.Client.Guilds[795053938666766366].Roles[800460708319592478],
-					Description = "Poderá usar a cor <@&800460708319592478>\n no servidor, através do comando `hcor`.",
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
 				},
 				new Color
 				{
@@ -53,53 +53,61 @@ namespace Hanna.Shop
 					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f33f.png",
 					Emoji = DiscordEmoji.FromName(ctx.Client, ":herb:"),
 					Category = Category.Cores, DefValue = 2000,
-					Role = ctx.Client.Guilds[795053938666766366].Roles[800460354445377566],
-					Description = "Poderá usar a cor <@&800460354445377566>\n no servidor, através do comando `hcor`.",
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
 				},
 				new Color(ctx, "🐻Marrom", ":bear:", true, Category.Cores, new string[] { "marrom", "brown" },
-				3000, new DiscordColor("#923004"), 800460023385948210, "Poderá usar a cor <@&800460023385948210> no servidor, através do comando `hcor`."
+				3000, new DiscordColor("#923004"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🌙Meia Noite", ":crescent_moon:", true, Category.Cores, new string[] { "meia noite", "meianoite", "mid night", "midnight" },
-				3000, new DiscordColor("#4b0082"), 800457860411555852, "Poderá usar a cor <@&800457860411555852> no servidor, através do comando `hcor`."
+				3000, new DiscordColor("#4b0082"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🐸Lima", ":frog:", true, Category.Cores, new string[] { "lima", "lime" },
-				3000, new DiscordColor("#10ff00"), 800459707361132604, "Poderá usar a cor <@&800459707361132604> no servidor, através do comando `hcor`."
+				3000, new DiscordColor("#10ff00"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🐦Vermelho", ":bird:", true, Category.Cores, new string[] { "vermelho", "red" },
-				5000, new DiscordColor("#ff0003"), 800458359471210536, "Poderá usar a cor <@&800458359471210536> no servidor, através do comando `hcor`."
+				5000, new DiscordColor("#ff0003"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "⭐Amarelo", ":star:", true, Category.Cores, new string[] { "amarelo", "yellow" },
-				5000, new DiscordColor("#feff00"), 800458737143119902, "Poderá usar a cor <@&800458737143119902> no servidor, através do comando `hcor`."
+				5000, new DiscordColor("#feff00"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🌊Azul", ":ocean:", true, Category.Cores, new string[] { "azul", "blue" },
-				5000, new DiscordColor("#00b3ff"), 800459076755783690, "Poderá usar a cor <@&800459076755783690> no servidor, através do comando `hcor`."
+				5000, new DiscordColor("#00b3ff"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "☘️Verde Grama", ":shamrock:", true, Category.Cores, new string[] { "verde grama", "verdegrama", "grass green", "grassgreen" },
-				5000, new DiscordColor("#91ff83"), 800459459440672818, "Poderá usar a cor <@&800459459440672818> no servidor, através do comando `hcor`."
+				5000, new DiscordColor("#91ff83"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🍇Púrpura", ":grapes:", true, Category.Cores, new string[] { "púrpura", "purpura", "purple" },
-				8000, new DiscordColor("#af00ff"), 800459148952993793, "Poderá usar a cor <@&800459148952993793> no servidor, através do comando `hcor`."
+				8000, new DiscordColor("#af00ff"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🍊Laranja", ":tangerine:", true, Category.Cores, new string[] { "laranja", "orange" },
-				8000, new DiscordColor("#ff8a00"), 800459444563607564, "Poderá usar a cor <@&800459444563607564> no servidor, através do comando `hcor`."
+				8000, new DiscordColor("#ff8a00"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🐳Ciano", ":whale:", true, Category.Cores, new string[] { "ciano", "cyan" },
-				8000, new DiscordColor("#00faff"), 800461287477477457, "Poderá usar a cor <@&800461287477477457> no servidor, através do comando `hcor`."
+				8000, new DiscordColor("#00faff"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🦢Branco", ":swan:", true, Category.Cores, new string[] { "branco", "white" },
-				8000, new DiscordColor("#ffffff"), 800461639152435293, "Poderá usar a cor <@&800461639152435293> no servidor, através do comando `hcor`."
+				8000, new DiscordColor("#ffffff"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🕷️Void", ":spider:", true, Category.Cores, new string[] { "black", "void", "preto" },
-				10000, new DiscordColor("#050000"), 800458737143119902, "Poderá usar a cor <@&800458737143119902> no servidor, através do comando `hcor`."
+				10000, new DiscordColor("#050000"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 				new Color(ctx, "🏅Dourado", ":medal:", true, Category.Cores, new string[] { "dourado", "gold" },
-				10000, new DiscordColor("#feff00"), 800459882187849780, "Poderá usar a cor <@&800459882187849780> no servidor, através do comando `hcor`."
+				10000, new DiscordColor("#feff00"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
 				),
 			};
+			this.Miscs = new List<ShopItem>();
+			this.VIPs = new List<ShopItem>();
 		}
 		public ShopItem[] GroupBy(Category category, int groupSize, int index = 0)
 		{
-			return this.Colors.Skip(index).Take(groupSize).ToArray();
+			return category switch
+			{
+				Category.Cores => this.Colors.Skip(index).Take(groupSize).ToArray(),
+				Category.Miscelânea => this.Miscs.Skip(index).Take(groupSize).ToArray(),
+				Category.VIPs => this.VIPs.Skip(index).Take(groupSize).ToArray(),
+				_ => Array.Empty<ShopItem>(),
+			};
 		}
 		public List<ShopItem> GetList(Category category)
 		{
@@ -108,7 +116,7 @@ namespace Hanna.Shop
 				Category.Cores => this.Colors,
 				Category.Miscelânea => this.Miscs,
 				Category.VIPs => this.VIPs,
-				_ => this.Colors,
+				_ => new List<ShopItem>(),
 			};
 		}
 		public ShopItem Find(Category category, string alias)
@@ -205,12 +213,12 @@ namespace Hanna.Shop
 			this.Aliases = aliases;
 			this.DefValue = defValue;
 			this.Description = description;
-			this.Role = ctx.Client.Guilds[795053938666766366].Roles[roleId];
+			this.Role = ctx.Client.Guilds[822904923556675656].Roles[roleId];
 
 		}
 		public Color(CommandContext ctx)
 		{
-			this.Role = ctx.Client.Guilds[795053938666766366].Roles[this.RoleId];
+			this.Role = ctx.Client.Guilds[822904923556675656].Roles[this.RoleId];
 		}
 		public Color() { }
 		public override async Task<bool> Buy(CommandContext ctx, DiscordUser user, Currency currency, Time time)
