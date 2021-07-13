@@ -4,6 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <StartupObject>Hanna.Program</StartupObject>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>.</DockerfileContext>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -14,6 +16,7 @@
     <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00774" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00774" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00774" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.14" />
     <PackageReference Include="MongoDB.Bson" Version="2.12.0-beta1" />
     <PackageReference Include="MongoDB.Driver" Version="2.12.0-beta1" />
   </ItemGroup>
