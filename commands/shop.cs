@@ -7,85 +7,24 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using DSharpPlus.Interactivity;
-using DSharpPlus.Interactivity.Extensions;
 
 using Hanna.Shop;
+using Hanna.Util;
 
 namespace Hanna.Commands
 {
 	class ShopCommand : BaseCommandModule
 	{
-		private bool Initialized { get; set; }
 		public ShopManager Manager { get; private set; }
 
 		// Inicializa as classes
 		private void Initialize(CommandContext ctx)
 		{
-			if (!this.Initialized)
+			if (this.Manager == null)
 			{
 				this.Manager = new ShopManager(ctx);
 			}
 		}
-
-		// ----------------------------------------------------------------> BASE <---------------------------------------------------------------------
-		private async Task<bool> ReactAll(DiscordMessage msg, List<DiscordEmoji> emojis)
-		{
-			try
-			{
-				// Reage com cada emoji
-				foreach (DiscordEmoji emoji in emojis)
-					await msg.CreateReactionAsync(emoji);
-			}
-			catch { return false; }
-			return true;
-		}
-		private async Task<DiscordEmoji> AwaitReaction(DiscordMessage msg, DiscordUser user, List<DiscordEmoji> validEmojis)
-		{
-			do
-			{
-				// Espera uma reação qualquer na mensagem
-				InteractivityResult<MessageReactionAddEventArgs> reaction
-					= await msg.WaitForReactionAsync(user);
-
-				// Verifica se não ocorreu Timeout
-				if (reaction.TimedOut)
-					throw new TimeoutException();
-
-				// Verifica se a reação é válida
-				if(validEmojis.Any(emoji => emoji.Name == reaction.Result.Emoji.Name))
-					return reaction.Result.Emoji;
-			} while (true);
-		}
-		private async Task<DiscordMessage> SendEmbed(DiscordMessage msg, DiscordEmbed embed, string content = "")
-		{
-			// Tenta editar a mensagem
-			DiscordMessage sentMsg;
-			try
-			{
-				await msg.DeleteAllReactionsAsync();
-				sentMsg = await msg.ModifyAsync(content, embed);
-			}
-			// Senão, manda uma mensagem nova
-			catch
-			{
-				sentMsg = await msg.Channel.SendMessageAsync(embed);
-			}
-			return sentMsg;
-		}
-		private async Task<(DiscordEmoji, bool)> ReactAndAwait(DiscordMessage msg, DiscordUser user, DiscordEmbed embed, List<DiscordEmoji> emojis)
-		{
-			// Reage com os emojis e inicia o listener
-			Task<bool> reacted = this.ReactAll(msg, emojis);
-			Task<DiscordEmoji> emoji = this.AwaitReaction(msg, user, emojis);
-
-			await Task.WhenAll(reacted, emoji);
-
-			// Retorna os resultados
-			return (emoji.Result, reacted.Result);
-		}
-		// ----------------------------------------------------------------> BASE <---------------------------------------------------------------------
 
 		// -------------------------------------------------------------> NAVEGAÇÃO <-------------------------------------------------------------------
 		[Command("loja")]
@@ -103,7 +42,7 @@ namespace Hanna.Commands
 			{ await this.SendCategories(ctx, msg, ctx.Message.Author);
 
 			} catch (Exception err)
-			{ await this.Error(msg, err); }
+			{ await Error(msg, err); }
 		}
 
 		private async Task<bool> SendCategories(CommandContext ctx, DiscordMessage msg, DiscordUser user)
@@ -125,25 +64,25 @@ namespace Hanna.Commands
 			};
 
 			// Envia o embed
-			DiscordMessage sentMsg = await this.SendEmbed(msg, builder.Build());
+			DiscordMessage sentMsg = await EmbedUtils.SendEmbed(msg, builder.Build());
 
 			// Reage e espera a reação correta
 			DiscordEmoji emoji;
 			bool reacted;
-			try { (emoji, reacted) = await this.ReactAndAwait(sentMsg, user, builder, emojis); }
+			try { (emoji, reacted) = await EmbedUtils.ReactAndAwait(sentMsg, user, emojis); }
 
 			// Termina em caso de timeout
-			catch { return await this.End(sentMsg); }
+			catch { return await End(sentMsg); }
 
 			// Caso tenha reagido, passa para outro handler
-			Category category = this.Manager.GetCategory(emoji.GetDiscordName());
+			Category category = ShopManager.GetCategory(emoji.GetDiscordName());
 			return await this.SendItens(ctx, msg, user, category);
 		}
 
 		private async Task<bool> SendItens(CommandContext ctx, DiscordMessage msg, DiscordUser user, Category category, int index = 0)
 		{
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
-			List<DiscordEmoji> emojis = new List<DiscordEmoji>();
+			DiscordEmbedBuilder builder = new();
+			List<DiscordEmoji> emojis = new();
 			ShopItem[] itens = this.Manager.GroupBy(category, 3, index * 3);
 			
 			// Adiciona os fields
@@ -153,7 +92,8 @@ namespace Hanna.Commands
 				builder.AddField(item.Name, 
 					(item.Temporary ? "**Temporário**" : "**Permanente**") + "\n" +
 					(item.Temporary ? $"7 Dias:\n" : "" ) + 
-					$"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true);
+					$"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n" +
+					$"💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true);
 			}
 
 			int count = this.Manager.GetList(category).Count;
@@ -167,18 +107,19 @@ namespace Hanna.Commands
 			// Envia o embed
 			builder
 				.WithColor(itens.Length!=0 ? itens.First().DiscColor : new DiscordColor("#000000"))
-				.WithAuthor($"{category} {new string(' ', builder.Fields.Count * 15)} {index + 1}/{(int)Math.Ceiling((decimal)count / 3)}", null, this.Manager.GetImageUrl(ctx, category))
+				.WithAuthor($"{category} {new string(' ', builder.Fields.Count * 15)}" +
+					$"{index + 1}/{(int)Math.Ceiling((decimal)count / 3)}", null, ShopManager.GetImageUrl(category))
 				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
 				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await this.SendEmbed(msg, builder.Build());
+			DiscordMessage sentMsg = await EmbedUtils.SendEmbed(msg, builder.Build());
 
 			// Reage e espera a reação correta
 			DiscordEmoji emoji;
 			bool reacted;
-			try { (emoji, reacted) = await this.ReactAndAwait(sentMsg, user, builder, emojis); }
+			try { (emoji, reacted) = await EmbedUtils.ReactAndAwait(sentMsg, user, emojis); }
 
 			// Termina em caso de timeout
-			catch { return await this.End(sentMsg); }
+			catch { return await End(sentMsg); }
 
 			// Caso seja alguma opção de navegação
 			string name = emoji.GetDiscordName();
@@ -196,7 +137,7 @@ namespace Hanna.Commands
 		private async Task<bool> SendItem(CommandContext ctx, DiscordMessage msg, DiscordUser user, ShopItem item)
 		{
 			// Adiciona os emojis
-			List<DiscordEmoji> emojis = new List<DiscordEmoji>();
+			List<DiscordEmoji> emojis = new();
 			if(item.Temporary)
 			{
 				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":one:"));
@@ -207,14 +148,23 @@ namespace Hanna.Commands
 			
 
 			// Adiciona os fields
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
+			DiscordEmbedBuilder builder = new();
 			if(item.Temporary)
 			{
 				builder
-					.AddField("1 dia", $"💵 {item.GetValue(Currency.Coins, Time.UmDia)}\n💎 {item.GetValue(Currency.Gems, Time.UmDia)}", true)
-					.AddField("3 dias", $"💵 {item.GetValue(Currency.Coins, Time.TrêsDias)}\n💎 {item.GetValue(Currency.Gems, Time.TrêsDias)}", true)
-					.AddField("7 dias", $"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true);
-			} else { builder.AddField("Permanente", $"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true); }
+					.AddField("1 dia",
+						$"💵 {item.GetValue(Currency.Coins, Time.UmDia)}\n" +
+						$"💎 {item.GetValue(Currency.Gems, Time.UmDia)}", true)
+					.AddField("3 dias",
+						$"💵 {item.GetValue(Currency.Coins, Time.TrêsDias)}\n" +
+						$"💎 {item.GetValue(Currency.Gems, Time.TrêsDias)}", true)
+					.AddField("7 dias",
+						$"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n" +
+						$"💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true);
+
+			} else { builder.AddField("Permanente",
+				$"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n" +
+				$"💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true); }
 
 			int count = this.Manager.GetList(item.Category).Count;
 			int index = this.Manager.GetList(item.Category).FindIndex(i => i == item);
@@ -232,15 +182,15 @@ namespace Hanna.Commands
 				.WithDescription(item.Description)
 				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
 				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await this.SendEmbed(msg, builder.Build());
+			DiscordMessage sentMsg = await EmbedUtils.SendEmbed(msg, builder.Build());
 
 			// Reage e espera a reação correta
 			DiscordEmoji emoji;
 			bool reacted;
-			try { (emoji, reacted) = await this.ReactAndAwait(sentMsg, user, builder, emojis); }
+			try { (emoji, reacted) = await EmbedUtils.ReactAndAwait(sentMsg, user, emojis); }
 
 			// Termina em caso de timeout
-			catch { return await this.End(sentMsg); }
+			catch { return await End(sentMsg); }
 
 			// Caso seja alguma opção de navegação
 			string name = emoji.GetDiscordName();
@@ -267,7 +217,7 @@ namespace Hanna.Commands
 				return await this.Reject(ctx, msg, user, item, time);
 
 			// Adiciona ⤴️
-			List<DiscordEmoji> emojis = new List<DiscordEmoji>
+			List<DiscordEmoji> emojis = new()
 			{
 				DiscordEmoji.FromName(ctx.Client, ":arrow_heading_up:"),
 			};
@@ -284,19 +234,19 @@ namespace Hanna.Commands
 				.WithThumbnail(item.ImageLink)
 				.WithAuthor("Tem certeza que deseja comprar?", null, "https://garticbot.gg/images/icons/alert.png")
 				.WithDescription($"**Nome:** {item.Name}\n" +
-					$"{(item.Temporary ? $"**Validade:** { this.Manager.FormatTime(time)}" : "")}\n" +
+					$"{(item.Temporary ? $"**Validade:** { ShopManager.FormatTime(time)}" : "")}\n" +
 					$"**Valor:** 💵 {item.GetValue(Currency.Coins, time)} • 💎 {item.GetValue(Currency.Gems, time)}")
 				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
 				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await this.SendEmbed(msg, builder.Build());
+			DiscordMessage sentMsg = await EmbedUtils.SendEmbed(msg, builder.Build());
 
 			// Reage e espera a reação correta
 			DiscordEmoji emoji;
 			bool reacted;
-			try { (emoji, reacted) = await this.ReactAndAwait(sentMsg, user, builder, emojis); }
+			try { (emoji, reacted) = await EmbedUtils.ReactAndAwait(sentMsg, user, emojis); }
 
 			// Termina em caso de timeout
-			catch { return await this.End(sentMsg); }
+			catch { return await End(sentMsg); }
 
 			// Caso tenha reação
 			string name = emoji.GetDiscordName();
@@ -304,7 +254,12 @@ namespace Hanna.Commands
 			if (name == ":arrow_heading_up:")
 				return await this.SendItens(ctx, sentMsg, user, item.Category, index / 3);
 
-			Currency currency = name switch { ":dollar:" => Currency.Coins, ":gem:" => Currency.Coins, _ => Currency.Coins };
+			Currency currency = name switch 
+				{
+					":dollar:" => Currency.Coins,
+					":gem:" => Currency.Coins,
+					_ => Currency.Coins
+				};
 			try
 			{
 				await item.Buy(ctx, user, currency, time);
@@ -312,7 +267,7 @@ namespace Hanna.Commands
 				// TODO tirar o dinheiro da carteira
 			}
 			catch (Exception err)
-			{ return await this.Error(msg, err, item, time); }
+			{ return await Error(msg, err, item, time); }
 
 			return await this.Success(ctx, sentMsg, user, item, currency, time);
 		}
@@ -320,7 +275,7 @@ namespace Hanna.Commands
 		private async Task<bool> Success(CommandContext ctx, DiscordMessage msg, DiscordUser user, ShopItem item, Currency currency, Time time = Time.SeteDias)
 		{
 			// Adiciona ⤴️
-			List<DiscordEmoji> emojis = new List<DiscordEmoji>
+			List<DiscordEmoji> emojis = new()
 			{
 				DiscordEmoji.FromName(ctx.Client, ":arrow_heading_up:"),
 			};
@@ -330,21 +285,21 @@ namespace Hanna.Commands
 				.WithColor(new DiscordColor("#91FF84"))
 				.WithAuthor("Concluído", null, "https://garticbot.gg/images/icons/hit.png")
 				.WithThumbnail(item.ImageLink)
-				.WithDescription($"o item {item.Name} {(item.Temporary ? $"({this.Manager.FormatTime(time)})" : "")}\n" +
+				.WithDescription($"o item {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n" +
 					"foi comprado com sucesso!\n\n" +
-					$"**Item:** {item.Name} {(item.Temporary ? $"({this.Manager.FormatTime(time)})" : "")}\n" +
+					$"**Item:** {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n" +
 					$"**Valor:** {(currency == Currency.Coins ? "💵" : "💎")} {item.GetValue(currency, time)}")
 				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
 				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await this.SendEmbed(msg, builder.Build());
+			DiscordMessage sentMsg = await EmbedUtils.SendEmbed(msg, builder.Build());
 
 			// Reage e espera a reação correta
 			DiscordEmoji emoji;
 			bool reacted;
-			try { (emoji, reacted) = await this.ReactAndAwait(sentMsg, user, builder, emojis); }
+			try { (emoji, reacted) = await EmbedUtils.ReactAndAwait(sentMsg, user, emojis); }
 
 			// Termina em caso de timeout
-			catch { return await this.End(sentMsg); }
+			catch { return await End(sentMsg); }
 
 			// Caso tenha reação
 			string name = emoji.GetDiscordName();
@@ -355,7 +310,7 @@ namespace Hanna.Commands
 		private async Task<bool> Reject(CommandContext ctx, DiscordMessage msg, DiscordUser user, ShopItem item, Time time = Time.SeteDias)
 		{
 			// Adiciona ⤴️
-			List<DiscordEmoji> emojis = new List<DiscordEmoji>
+			List<DiscordEmoji> emojis = new()
 			{
 				DiscordEmoji.FromName(ctx.Client, ":arrow_heading_up:"),
 			};
@@ -366,21 +321,21 @@ namespace Hanna.Commands
 				.WithAuthor("Cancelado", null, "https://garticbot.gg/images/icons/error.png")
 				.WithThumbnail(item.ImageLink)
 				.WithDescription("Infelizmente você não tem coins,\nnem gems suficientes para" +
-					$"comprar {item.Name} {(item.Temporary ? $"({this.Manager.FormatTime(time)})" : "")}\n\n" +
-					$"**Item:** {item.Name} {(item.Temporary ? $"({this.Manager.FormatTime(time)})" : "")}\n" +
+					$"comprar {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n\n" +
+					$"**Item:** {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n" +
 					$"**Valor:** 💵 {item.GetValue(Currency.Coins, time)} • 💎 {item.GetValue(Currency.Gems, time)}\n" +
 					$"**Faltam:** ..")
 				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
 				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await this.SendEmbed(msg, builder.Build());
+			DiscordMessage sentMsg = await EmbedUtils.SendEmbed(msg, builder.Build());
 
 			// Reage e espera a reação correta
 			DiscordEmoji emoji;
 			bool reacted;
-			try { (emoji, reacted) = await this.ReactAndAwait(sentMsg, user, builder, emojis); }
+			try { (emoji, reacted) = await EmbedUtils.ReactAndAwait(sentMsg, user, emojis); }
 
 			// Termina em caso de timeout
-			catch { return await this.End(sentMsg); }
+			catch { return await End(sentMsg); }
 
 			// Caso tenha reação
 			string name = emoji.GetDiscordName();
@@ -388,20 +343,20 @@ namespace Hanna.Commands
 			return await this.SendItens(ctx, sentMsg, user, item.Category, index / 3);
 		}
 
-		private async Task<bool> Error(DiscordMessage msg, Exception err, ShopItem item, Time time = Time.SeteDias)
+		private static async Task<bool> Error(DiscordMessage msg, Exception err, ShopItem item, Time time = Time.SeteDias)
 		{
 			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
 				.WithColor(new DiscordColor("#FF8484"))
 				.WithThumbnail(item.ImageLink)
 				.WithAuthor("Cancelado", null, "https://garticbot.gg/images/icons/error.png")
 				.WithDescription($"Infelizmente algo deu errado durante a compra desse item\n\n" +
-				$"**Item:** {item.Name} {(item.Temporary ? $"({this.Manager.FormatTime(time)})" : "")}\n" +
+				$"**Item:** {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n" +
 				$"**Erro:** {err.TargetSite} => {err.GetType()}: `{err.Message}`\n\n```{err.StackTrace}```");
 
-			try { await this.SendEmbed(msg, builder.Build()); return true; }
+			try { await EmbedUtils.SendEmbed(msg, builder.Build()); return true; }
 			catch { return false; }
 		}
-		private async Task<bool> Error(DiscordMessage msg, Exception err)
+		private static async Task<bool> Error(DiscordMessage msg, Exception err)
 		{
 			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
 				.WithColor(new DiscordColor("#FF8484"))
@@ -409,16 +364,16 @@ namespace Hanna.Commands
 				.WithDescription($"Infelizmente algo deu errado durante a execução do comando\n\n" +
 				$"**Erro:** {err.TargetSite} => {err.GetType()}: `{err.Message}`\n\n```{err.StackTrace}```");
 
-			try { await this.SendEmbed(msg, builder.Build()); return true; }
+			try { await EmbedUtils.SendEmbed(msg, builder.Build()); return true; }
 			catch { return false; }
 		}
 
-		private async Task<bool> End(DiscordMessage msg)
+		private static async Task<bool> End(DiscordMessage msg)
 		{
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder(msg.Embeds.First())
+			DiscordEmbedBuilder builder = new DiscordEmbedBuilder(msg.Embeds[0])
 				.WithFooter("Tempo esgotado", "https://garticbot.gg/images/icons/time.png");
 			
-			try{ await this.SendEmbed(msg, builder.Build()); return true; }
+			try{ await EmbedUtils.SendEmbed(msg, builder.Build()); return true; }
 			catch { return false; }
 		}
 		// ----------------------------------------------------------> INTERATIVIDADE <-----------------------------------------------------------------

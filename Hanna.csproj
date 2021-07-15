@@ -24,6 +24,7 @@
   <ItemGroup>
     <Folder Include="bin\Debug\netcoreapp3.1\" />
     <Folder Include="mongodb\models\" />
+    <Folder Include="shop\itens\" />
   </ItemGroup>
 
 </Project>

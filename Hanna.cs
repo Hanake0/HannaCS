@@ -53,13 +53,13 @@ namespace Hanna
 
 			// Registra as classes de comandos
 			this.Commands.RegisterCommands<ShopCommand>();
-			this.Commands.RegisterCommands<Util>();
+			this.Commands.RegisterCommands<Hanna.Commands.Util>();
 
 			await this.Client.ConnectAsync();
 			await Task.Delay(-1);
 		}
 
-		private async Task<Task> OnReady(DiscordClient client, ReadyEventArgs args)
+		private Task OnReady(DiscordClient client, ReadyEventArgs args)
 		{
 			return Task.Run(async () =>
 			{
@@ -68,6 +68,5 @@ namespace Hanna
 				await channel.SendMessageAsync("on the line :sunglasses:");
 			});
 		}
-
 	}
 }

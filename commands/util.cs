@@ -1,4 +1,5 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using DSharpPlus;
+using DSharpPlus.CommandsNext;
 
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -34,7 +35,7 @@ namespace Hanna.Commands
 				string responseString;
 				using (Stream dataStream = response.GetResponseStream())
 				{
-					StreamReader reader = new StreamReader(dataStream);
+					StreamReader reader = new(dataStream);
 					responseString = reader.ReadToEnd();
 				}
 
@@ -49,15 +50,15 @@ namespace Hanna.Commands
 		}
 
 		[Command("avatar"), Aliases("perfil")]
+		[Description("Envia a imagem de perfil do usuário")]
 		public async Task Avatar(CommandContext ctx,
-		[Description("O dono da imagem")] DiscordUser usuário)
+			[Description("O dono da imagem")] DiscordUser usuário)
 		{
 			await ctx.TriggerTypingAsync().ConfigureAwait(false);
 			await ctx.RespondAsync(usuário.AvatarUrl);
 		}
 
 		[Command("avatar")]
-		[Description("Envia a imagem de perfil do usuário")]
 		public async Task Avatar(CommandContext ctx)
 		{
 			await ctx.TriggerTypingAsync().ConfigureAwait(false);
@@ -67,11 +68,30 @@ namespace Hanna.Commands
 
 		[Command("say"), Aliases("diga")]
 		public async Task Say(CommandContext ctx,
+			[Description("O canal para enviar a mensagem")] DiscordChannel channel,
+			[Description("O texto á dizer"), RemainingText] string text)
+		{
+			if (ctx.Member.PermissionsIn(channel).HasFlag(Permissions.SendMessages))
+			{
+				_ = ctx.Message.DeleteAsync();
+				await channel.TriggerTypingAsync();
+				await channel.SendMessageAsync(text);
+			}
+			else
+				await ctx.RespondAsync("Você não tem permissão para enviar mensagens neste canal");
+		}
+
+		[Command("say")]
+		public async Task Say(CommandContext ctx,
 			[Description("O texto á dizer"), RemainingText] string text)
 		{
 			_ = ctx.Message.DeleteAsync();
 			await ctx.TriggerTypingAsync();
-			await ctx.RespondAsync(text);
+			DiscordMessage referencedMsg = ctx.Message.ReferencedMessage;
+			if (referencedMsg != null)
+				await referencedMsg.RespondAsync(text);
+			else
+				await ctx.Channel.SendMessageAsync(text);
 		}
 	}
 }

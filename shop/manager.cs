@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -35,7 +34,7 @@ namespace Hanna.Shop
 					Category = Category.Cores, DefValue = 2000,
 					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
 					Description = $"Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
-				},
+				}, // 🌺Amêndoa
 				new Color
 				{
 					Temporary = true, DiscColor = new DiscordColor("#ffa3f7"), Name = "🩰Rosa Bebê",
@@ -45,7 +44,7 @@ namespace Hanna.Shop
 					Category = Category.Cores, DefValue = 2000,
 					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
 					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
-				},
+				}, // 🩰Rosa Bebê
 				new Color
 				{
 					Temporary = true, DiscColor = new DiscordColor("#2dcc70"), Name = "🌿Menta",
@@ -55,46 +54,137 @@ namespace Hanna.Shop
 					Category = Category.Cores, DefValue = 2000,
 					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
 					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
-				},
-				new Color(ctx, "🐻Marrom", ":bear:", true, Category.Cores, new string[] { "marrom", "brown" },
-				3000, new DiscordColor("#923004"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🌙Meia Noite", ":crescent_moon:", true, Category.Cores, new string[] { "meia noite", "meianoite", "mid night", "midnight" },
-				3000, new DiscordColor("#4b0082"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🐸Lima", ":frog:", true, Category.Cores, new string[] { "lima", "lime" },
-				3000, new DiscordColor("#10ff00"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🐦Vermelho", ":bird:", true, Category.Cores, new string[] { "vermelho", "red" },
-				5000, new DiscordColor("#ff0003"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "⭐Amarelo", ":star:", true, Category.Cores, new string[] { "amarelo", "yellow" },
-				5000, new DiscordColor("#feff00"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🌊Azul", ":ocean:", true, Category.Cores, new string[] { "azul", "blue" },
-				5000, new DiscordColor("#00b3ff"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "☘️Verde Grama", ":shamrock:", true, Category.Cores, new string[] { "verde grama", "verdegrama", "grass green", "grassgreen" },
-				5000, new DiscordColor("#91ff83"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🍇Púrpura", ":grapes:", true, Category.Cores, new string[] { "púrpura", "purpura", "purple" },
-				8000, new DiscordColor("#af00ff"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🍊Laranja", ":tangerine:", true, Category.Cores, new string[] { "laranja", "orange" },
-				8000, new DiscordColor("#ff8a00"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🐳Ciano", ":whale:", true, Category.Cores, new string[] { "ciano", "cyan" },
-				8000, new DiscordColor("#00faff"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🦢Branco", ":swan:", true, Category.Cores, new string[] { "branco", "white" },
-				8000, new DiscordColor("#ffffff"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🕷️Void", ":spider:", true, Category.Cores, new string[] { "black", "void", "preto" },
-				10000, new DiscordColor("#050000"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
-				new Color(ctx, "🏅Dourado", ":medal:", true, Category.Cores, new string[] { "dourado", "gold" },
-				10000, new DiscordColor("#feff00"), 851195394494693388, "Poderá usar a cor <@&851195394494693388> no servidor, através do comando `hcor`."
-				),
+				}, // 🌿Menta
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#923004"), Name = "🐻Marrom",
+					Aliases = new string[] {  "marrom", "brown" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f43b.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":bear:"),
+					Category = Category.Cores, DefValue = 3000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🐻Marrom
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#4b0082"), Name = "🌙Meia Noite",
+					Aliases = new string[] {  "meia noite", "meianoite", "mid night", "midnight" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f319.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":crescent_moon:"),
+					Category = Category.Cores, DefValue = 3000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🌙Meia Noite
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#10ff00"), Name = "🐸Lima",
+					Aliases = new string[] {  "lima", "lime" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f438.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":frog:"),
+					Category = Category.Cores, DefValue = 3000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🐸Lima
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#ff0003"), Name = "🐦Vermelho",
+					Aliases = new string[] {  "vermelho", "red" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f426.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":bird:"),
+					Category = Category.Cores, DefValue = 5000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🐦Vermelho
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#feff00"), Name = "⭐Amarelo",
+					Aliases = new string[] {  "amarelo", "yellow" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/2b50.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":star:"),
+					Category = Category.Cores, DefValue = 5000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // ⭐Amarelo
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#00b3ff"), Name = "🌊Azul",
+					Aliases = new string[] {  "azul", "blue" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f30a.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":ocean:"),
+					Category = Category.Cores, DefValue = 5000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🌊Azul
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#91ff83"), Name = "☘️Verde Grama",
+					Aliases = new string[] {  "verde grama", "verdegrama", "grass green", "grassgreen" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/2618-fe0f.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":shamrock:"),
+					Category = Category.Cores, DefValue = 5000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // ☘️Verde Grama
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#af00ff"), Name = "🍇Púrpura",
+					Aliases = new string[] {  "púrpura", "purpura", "purple" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f347.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":grapes:"),
+					Category = Category.Cores, DefValue = 8000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🍇Púrpura
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#ff8a00"), Name = "🍊Laranja",
+					Aliases = new string[] {  "laranja", "orange" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f34a.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":tangerine:"),
+					Category = Category.Cores, DefValue = 8000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🍊Laranja
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#00faff"), Name = "🐳Ciano",
+					Aliases = new string[] {  "ciano", "cyan" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f433.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":whale:"),
+					Category = Category.Cores, DefValue = 8000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🐳Ciano
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#ffffff"), Name = "🦢Branco",
+					Aliases = new string[] {  "branco", "white" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f9a2.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":swan:"),
+					Category = Category.Cores, DefValue = 8000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🦢Branco
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#050000"), Name = "🕷️Void",
+					Aliases = new string[] {  "black", "void", "preto" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f577-fe0f.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":spider:"),
+					Category = Category.Cores, DefValue = 10000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🕷️Void
+				new Color
+				{
+					Temporary = true, DiscColor = new DiscordColor("#feff00"), Name = "🏅Dourado",
+					Aliases = new string[] {  "dourado", "gold" },
+					ImageLink = "https://twemoji.maxcdn.com/2/72x72/1f3c5.png",
+					Emoji = DiscordEmoji.FromName(ctx.Client, ":medal:"),
+					Category = Category.Cores, DefValue = 10000,
+					Role = ctx.Client.Guilds[822904923556675656].Roles[851195394494693388],
+					Description = "Poderá usar a cor <@&851195394494693388>\n no servidor, através do comando `hcor`.",
+				}, // 🏅Dourado
 			};
 			this.Miscs = new List<ShopItem>();
 			this.VIPs = new List<ShopItem>();
@@ -125,106 +215,33 @@ namespace Hanna.Shop
 				Array.Exists(c.Aliases, name => name == alias.ToLower())
 			);
 		}
-		public string FormatTime(Time time)
+		public static string FormatTime(Time time) => time switch
 		{
-			return time switch
-			{
-				Time.UmDia => "1 dia",
-				Time.TrêsDias => "3 dias",
-				Time.SeteDias => "7 dias",
-				_ => "",
-			};
-		}
-		public Category GetCategory(string emojiName)
+			Time.UmDia => "1 dia",
+			Time.TrêsDias => "3 dias",
+			Time.SeteDias => "7 dias",
+			_ => "",
+		};
+		public static Category GetCategory(string emojiName) => emojiName switch
 		{
-			return emojiName switch
-			{
-				":art:" => Category.Cores,
-				":ticket:" => Category.VIPs,
-				":jigsaw:" => Category.Miscelânea,
-				_ => Category.Cores,
-			};
-		}
-		public string GetEmoji(Category category)
+			":art:" => Category.Cores,
+			":ticket:" => Category.VIPs,
+			":jigsaw:" => Category.Miscelânea,
+			_ => Category.Cores,
+		};
+		public static string GetEmoji(Category category) => category switch
 		{
-			return category switch
-			{
-				Category.Cores => ":art:",
-				Category.Miscelânea => ":jigsaw:",
-				Category.VIPs => ":ticket:",
-				_ => ":art:",
-			};
-		}
-		public string GetImageUrl(CommandContext ctx, Category category)
+			Category.Cores => ":art:",
+			Category.Miscelânea => ":jigsaw:",
+			Category.VIPs => ":ticket:",
+			_ => ":art:",
+		};
+		public static string GetImageUrl(Category category) => category switch
 		{
-			return category switch
-            {
-                Category.Cores => "https://twemoji.maxcdn.com/2/72x72/1f3a8.png",
-                Category.Miscelânea => "https://twemoji.maxcdn.com/2/72x72/1f9e9.png",
-                Category.VIPs => "https://twemoji.maxcdn.com/2/72x72/1f3ab.png",
-                _ => "https://twemoji.maxcdn.com/2/72x72/1f3a8.png",
-            };
-		}
-	}
-	enum Category { Cores, VIPs, Miscelânea }
-	enum Currency { Coins, Gems }
-	enum Time { UmDia, TrêsDias, SeteDias }
-	abstract class ShopItem {
-		public DiscordColor DiscColor;
-		public DiscordEmoji Emoji;
-		public bool Temporary;
-		public string ImageLink;
-		public string Name;
-		public Category Category;
-		public string[] Aliases;
-		public ulong DefValue;
-		public string Description;
-
-		public abstract Task<bool> Buy(CommandContext ctx, DiscordUser user, Currency currency, Time time);
-		public ulong GetValue( Currency currency, Time time)
-		{
-			ulong def = currency switch
-			{
-				Currency.Gems => (ulong)Math.Ceiling((double)this.DefValue / 1000),
-				Currency.Coins => this.DefValue,
-				_ => this.DefValue,
-			};
-			return time switch
-			{
-				Time.UmDia => (ulong)Math.Ceiling((double)def / 5),
-				Time.TrêsDias => (ulong)Math.Ceiling((double)def / 2),
-				Time.SeteDias => def,
-				_ => def,
-			};
-		}
-	}
-	class Color : ShopItem
-	{
-		public DiscordRole Role;
-		public ulong RoleId { get; private set; }
-		public Color(CommandContext ctx, string name, string emoji, bool temporary, Category category, string[] aliases,
-			ulong defValue, DiscordColor color, ulong roleId, string description)
-		{
-			this.DiscColor = color;
-			this.Name = name;
-			this.Emoji = DiscordEmoji.FromName(ctx.Client, emoji);
-			this.Temporary = temporary;
-			this.Category = category;
-			this.Aliases = aliases;
-			this.DefValue = defValue;
-			this.Description = description;
-			this.Role = ctx.Client.Guilds[822904923556675656].Roles[roleId];
-
-		}
-		public Color(CommandContext ctx)
-		{
-			this.Role = ctx.Client.Guilds[822904923556675656].Roles[this.RoleId];
-		}
-		public Color() { }
-		public override async Task<bool> Buy(CommandContext ctx, DiscordUser user, Currency currency, Time time)
-		{
-			await Task.Delay(2);
-			return false;
-		}
+			Category.Cores => "https://twemoji.maxcdn.com/2/72x72/1f3a8.png",
+			Category.Miscelânea => "https://twemoji.maxcdn.com/2/72x72/1f9e9.png",
+			Category.VIPs => "https://twemoji.maxcdn.com/2/72x72/1f3ab.png",
+			_ => "https://twemoji.maxcdn.com/2/72x72/1f3a8.png",
+		};
 	}
 }
