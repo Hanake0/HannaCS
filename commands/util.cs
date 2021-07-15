@@ -23,8 +23,6 @@ namespace Hanna.Commands
 		[Description("Comandinho de teste uwu")]
 		public async Task Teste(CommandContext ctx)
 		{
-			for(; ; )
-			{
 				WebRequest request = WebRequest.Create("https://musentm.vercel.app/api/test");
 				
 				HttpWebResponse response = (HttpWebResponse)request.GetResponse();
@@ -45,7 +43,6 @@ namespace Hanna.Commands
 				response.Close();
 
 				await Task.Delay(System.TimeSpan.FromSeconds(10));
-			}
 		}
 
 		[Command("avatar"), Aliases("perfil")]
