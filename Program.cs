@@ -1,8 +1,8 @@
 ﻿namespace Hanna {
 	class Program {
-		static async void Main() {
+		static void Main() {
 			Bot Hanna = new();
-			await Hanna.RunAsync();
+			Hanna.RunAsync().GetAwaiter().GetResult();
 		}
 	}
 }

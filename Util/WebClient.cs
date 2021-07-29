@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Villager.Util.JsonModels;
+using Hanna.Util.JsonModels;
 
 namespace Hanna.Util {
 	public static class WebClient {
