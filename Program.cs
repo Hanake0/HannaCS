@@ -1,12 +1,8 @@
-﻿namespace Hanna
-{
-	class Program
-	{
-		static void Main()
-		{
-			Bot Hanna = new Bot();
-			Hanna.RunAsync().GetAwaiter().GetResult();
-
+﻿namespace Hanna {
+	class Program {
+		static async void Main() {
+			Bot Hanna = new();
+			await Hanna.RunAsync();
 		}
 	}
 }

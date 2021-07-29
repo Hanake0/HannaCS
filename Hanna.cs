@@ -10,34 +10,33 @@ using Microsoft.Extensions.Logging;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
-using Hanna.Commands;
 using DSharpPlus.Interactivity.Extensions;
 
-namespace Hanna
-{
-	public class Bot
-	{
+namespace Hanna {
+	public class Bot {
 		// Client e extensões
 		public DiscordClient Client { get; private set; }
 		public InteractivityExtension Interactivity { get; private set; }
 		public CommandsNextExtension Commands { get; private set; }
 
-		public async Task RunAsync()
-		{
+		public async Task RunAsync() {
+
+			// Define o User-Agent do WebClient
+			Util.WebClient.Client.DefaultRequestHeaders
+				.Add("User-Agent", "UnReal - Hanna Bot");
+
 			// Configurações do client
-			this.Client = new DiscordClient(new DiscordConfiguration
-			{
-				Token = Environment.GetEnvironmentVariable("AUTH_TOKEN"),
+			this.Client = new DiscordClient(new DiscordConfiguration {
+				Token = Environment.GetEnvironmentVariable("DISCORD_TOKEN"),
 				TokenType = TokenType.Bot,
 				AutoReconnect = true,
 				MinimumLogLevel = LogLevel.Information,
-
+				LogTimestampFormat = "MMM dd yyyy - hh:mm:ss tt",
 			});
 			this.Client.Ready += this.OnReady;
 
 			// Configurações do command handler
-			this.Commands = this.Client.UseCommandsNext(new CommandsNextConfiguration
-			{
+			this.Commands = this.Client.UseCommandsNext(new CommandsNextConfiguration {
 				StringPrefixes = new string[] { Environment.GetEnvironmentVariable("PREFIX") },
 				EnableMentionPrefix = true,
 				EnableDms = true,
@@ -46,27 +45,28 @@ namespace Hanna
 
 			});
 
-			this.Interactivity = this.Client.UseInteractivity(new InteractivityConfiguration
-			{
+			this.Interactivity = this.Client.UseInteractivity(new InteractivityConfiguration {
 				Timeout = TimeSpan.FromMinutes(1),
 			});
 
 			// Registra as classes de comandos
-			this.Commands.RegisterCommands<ShopCommand>();
-			this.Commands.RegisterCommands<Hanna.Commands.Util>();
+			this.Commands.RegisterCommands<Commands.Util>();
+			this.Commands.RegisterCommands<Commands.ShopCommand>();
+			this.Commands.RegisterCommands<Commands.Suggestion>();
 
 			await this.Client.ConnectAsync();
 			await Task.Delay(-1);
 		}
 
-		private Task OnReady(DiscordClient client, ReadyEventArgs args)
-		{
-			return Task.Run(async () =>
-			{
-				DiscordChannel channel = await client.GetChannelAsync(828494435469623356);
+		private Task OnReady(DiscordClient client, ReadyEventArgs args) {
+			DiscordUser user = this.Client.CurrentUser;
 
-				await channel.SendMessageAsync("on the line :sunglasses:");
-			});
+			this.Client.Logger
+				.LogInformation(LoggerEvents.Startup, 
+					$"Logado como {user.Username}#{user.Discriminator}" +
+					$"({user.Id}) com sucesso!");
+
+			return Task.CompletedTask;
 		}
 	}
 }

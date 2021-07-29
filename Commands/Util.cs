@@ -4,84 +4,72 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 
-using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 
-namespace Hanna.Commands
-{
-	public class Util : BaseCommandModule
-	{
+using Hanna.Util;
+using Hanna.Util.JsonModels;
+
+namespace Hanna.Commands {
+	public class Util : BaseCommandModule {
 		[Command("ping")]
-		[Description("p-pong?!?")]
-		public async Task Ping(CommandContext ctx)
-		{
-			await ctx.TriggerTypingAsync().ConfigureAwait(false);
-			await ctx.RespondAsync("eita:flushed:... pong?").ConfigureAwait(false);
+		[Description("Verifica o ping do bot")]
+		public async Task PingAsync(CommandContext ctx) {
+			await ctx.TriggerTypingAsync();
+
+			int ping = ctx.Client.Ping;
+			DiscordColor color = ping < 300 ?
+					ping < 150 ? new("#07a602")/** Verde */ : new("#d98e04") // Laranja
+				: new("#bd1b0f"); // Vermelho
+
+			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+				.WithColor(color)
+				.WithAuthor("Ping:", null, "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f6f0.png")
+				.AddField(":satellite: | WS/Discord", $"{ping} ms");
+
+			await ctx.RespondAsync(builder);
 		}
 
-		[Command("teste")]
-		[Description("Comandinho de teste uwu")]
-		public async Task Teste(CommandContext ctx)
-		{
-				WebRequest request = WebRequest.Create("https://musentm.vercel.app/api/test");
-				
-				HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-				request.Credentials = CredentialCache.DefaultCredentials;
+		[Command("Online")]
+		[Description("Verifica se um servidor do minecraft está online")]
+		public async Task OnlineAsync(CommandContext ctx,
+			[Description("IP do servidor a checar")]string serverIp,
+			[Description("Porta do servidor")]int serverPort = 0) {
 
+			// Usa o WebClient do bot para acessar a API
+			McStatusAPI result =  await WebClient.GetMcServerInfoAsync(serverIp, serverPort);
 
-				string responseString;
-				using (Stream dataStream = response.GetResponseStream())
-				{
-					StreamReader reader = new(dataStream);
-					responseString = reader.ReadToEnd();
-				}
+			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+				.WithColor(result.online ? new("#07a602")/** Verde */ : new("#bd1b0f")) // Vermelho
+				.WithAuthor($"Server: {serverIp}", null, 
+					$"https://mcstatus.snowdev.com.br/api/favicon/{serverIp}/favicon.png");
 
-				await ctx.RespondAsync($"StatusCode: {response.StatusCode}: `{response.StatusDescription}`\n" +
-					$"Tipo de resposta: {response.ContentType}\n" +
-					$"Tamanho da resposta: {response.ContentLength}\n" +
-					$"Resposta: {responseString}\n");
-				response.Close();
+			// Caso o server esteja offline, não tenta mostrar nenhuma informação
+			string embedDesc = "";
+			if (result.online) embedDesc +=
+					$"**Players**: {result.players_online}/{result.max_players}\n" +
+					$"**Versão**: {result.version}\n" +
+					$"**Ping**: {result.ping} ms";
 
-				await Task.Delay(System.TimeSpan.FromSeconds(10));
+			else embedDesc += "**Servidor offline**";
+
+			await ctx.RespondAsync(builder.WithDescription(embedDesc));
 		}
-
-		[Command("avatar"), Aliases("perfil")]
-		[Description("Envia a imagem de perfil do usuário")]
-		public async Task Avatar(CommandContext ctx,
-			[Description("O dono da imagem")] DiscordUser usuário)
-		{
-			await ctx.TriggerTypingAsync().ConfigureAwait(false);
-			await ctx.RespondAsync(usuário.AvatarUrl);
-		}
-
-		[Command("avatar")]
-		public async Task Avatar(CommandContext ctx)
-		{
-			await ctx.TriggerTypingAsync().ConfigureAwait(false);
-			await ctx.RespondAsync(ctx.User.AvatarUrl);
-		}
-
 
 		[Command("say"), Aliases("diga")]
 		public async Task Say(CommandContext ctx,
-			[Description("O canal para enviar a mensagem")] DiscordChannel channel,
-			[Description("O texto á dizer"), RemainingText] string text)
-		{
-			if (ctx.Member.PermissionsIn(channel).HasFlag(Permissions.SendMessages))
-			{
+		[Description("O canal para enviar a mensagem")] DiscordChannel channel,
+		[Description("O texto á dizer"), RemainingText] string text) {
+			if (ctx.Member.PermissionsIn(channel).HasFlag(Permissions.SendMessages)) {
 				_ = ctx.Message.DeleteAsync();
 				await channel.TriggerTypingAsync();
 				await channel.SendMessageAsync(text);
-			}
-			else
+			} else
 				await ctx.RespondAsync("Você não tem permissão para enviar mensagens neste canal");
 		}
 
 		[Command("say")]
 		public async Task Say(CommandContext ctx,
-			[Description("O texto á dizer"), RemainingText] string text)
-		{
+			[Description("O texto á dizer"), RemainingText] string text) {
 			_ = ctx.Message.DeleteAsync();
 			await ctx.TriggerTypingAsync();
 			DiscordMessage referencedMsg = ctx.Message.ReferencedMessage;
