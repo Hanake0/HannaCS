@@ -13,6 +13,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Mongodb\models\**" />
+    <EmbeddedResource Remove="Mongodb\models\**" />
+    <None Remove="Mongodb\models\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DSharpPlus" Version="4.0.1" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.1" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.1" />
@@ -23,8 +29,7 @@
 
   <ItemGroup>
     <Folder Include="bin\Debug\netcoreapp3.1\" />
-    <Folder Include="mongodb\models\" />
-    <Folder Include="shop\itens\" />
+    <Folder Include="Shop\Itens\" />
   </ItemGroup>
 
 </Project>
