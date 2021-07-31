@@ -1,5 +1,5 @@
 ﻿namespace Hanna.Util.JsonModels {
-	public record McStatusAPI {
+	public record McStatusAPIResponse {
 #pragma warning disable IDE1006 // Estilos de Nomenclatura
 		public bool online { get; init; }
 		public string motd { get; init; }

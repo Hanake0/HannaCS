@@ -36,7 +36,7 @@ namespace Hanna.Commands {
 			[Description("Porta do servidor")]int serverPort = 0) {
 
 			// Usa o WebClient do bot para acessar a API
-			McStatusAPI result =  await WebClient.GetMcServerInfoAsync(serverIp, serverPort);
+			McStatusAPIResponse result =  await WebClient.GetMcServerInfoAsync(serverIp, serverPort);
 
 			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
 				.WithColor(result.online ? new("#07a602")/** Verde */ : new("#bd1b0f")) // Vermelho

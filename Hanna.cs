@@ -53,6 +53,7 @@ namespace Hanna {
 			this.Commands.RegisterCommands<Commands.Util>();
 			this.Commands.RegisterCommands<Commands.ShopCommand>();
 			this.Commands.RegisterCommands<Commands.Suggestion>();
+			this.Commands.RegisterCommands<Commands.APIs>();
 
 			await this.Client.ConnectAsync();
 			await Task.Delay(-1);

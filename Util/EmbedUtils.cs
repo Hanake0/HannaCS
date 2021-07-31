@@ -8,6 +8,8 @@ using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 
+using Hanna.Configuration;
+
 namespace Hanna.Util {
 	public static class EmbedUtils {
 
@@ -16,22 +18,22 @@ namespace Hanna.Util {
 		/// Builder com cor e autor configurados para "Cancelado" em vermelho
 		/// </summary>
 		public static DiscordEmbedBuilder ErrorBuilder { get => new DiscordEmbedBuilder()
-			.WithColor(new DiscordColor("#FF8484"))
-			.WithAuthor("Cancelado", null, "https://garticbot.gg/images/icons/error.png");
+			.WithColor(Embeds.Colors.DefaultRed)
+			.WithAuthor("Cancelado", null, Embeds.Images.RedCross);
 		}
 		/// <summary>
 		/// Builder com cor e autor configurados para "Sucesso" em verde
 		/// </summary>
 		public static DiscordEmbedBuilder SuccesBuilder { get => new DiscordEmbedBuilder()
-			.WithColor(new DiscordColor("#91FF84"))
-			.WithAuthor("Sucesso", null, "https://garticbot.gg/images/icons/hit.png");
+			.WithColor(Embeds.Colors.DefaultGreen)
+			.WithAuthor("Sucesso", null, Embeds.Images.GreenCheck);
 		}
 		/// <summary>
 		/// Builder com cor e autor configurados para "Aviso" em laranja
 		/// </summary>
 		public static DiscordEmbedBuilder WarningBuilder { get => new DiscordEmbedBuilder()
-			.WithColor(new DiscordColor("#FFFD84"))
-			.WithAuthor("Aviso", null, "https://garticbot.gg/images/icons/alert.png");
+			.WithColor(Embeds.Colors.DefaultOrange)
+			.WithAuthor("Aviso", null, Embeds.Images.OrangeExclamation);
 		}
 		#endregion
 
