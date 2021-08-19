@@ -81,6 +81,7 @@ namespace Hanna {
 		}
 
 		private async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs args) {
+			if(args.Exception is CommandNotFoundException) return;
 
 			// TODO: configurar canais sem logging
 			if(args.Context.Channel.Id == 827661920974274591) return;
@@ -112,7 +113,7 @@ namespace Hanna {
 				return;
 
 			// Caso seja algum outro erro desconhecido
-			} else if(args.Exception is not CommandNotFoundException)
+			} else
 				await EmbedUtils.Error(args.Context.Message, args.Exception);
 		}
 	}
