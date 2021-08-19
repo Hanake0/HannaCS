@@ -341,3 +341,5 @@ healthchecksdb
 
 # Enviroment variables
 /Properties/launchSettings.json
+.vscode/*
+.idea/*
