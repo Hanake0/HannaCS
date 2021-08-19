@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Hanna.Configuration {
+namespace Hanna.Configuration.APIs {
 	public static class HttpCatsAPI {
+		public static readonly string Logo = "https://unreal.vercel.app/assets/logos/httpcats-icon.svg";
 		public static readonly string Link = "https://http.cat/";
 		public static readonly int[] ResponseCodes = new int[] {
 			// Information

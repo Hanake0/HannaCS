@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Hanna.Configuration;
+using Hanna.Configuration.APIs;
 using Hanna.Util.JsonModels;
 
 namespace Hanna.Util {

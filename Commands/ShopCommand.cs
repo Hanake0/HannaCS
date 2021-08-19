@@ -13,24 +13,21 @@ using Hanna.Util;
 
 namespace Hanna.Commands
 {
-	class ShopCommand : BaseCommandModule
-	{
+	public class ShopCommand : BaseCommandModule {
 		public ShopManager Manager { get; private set; }
 
 		// Inicializa as classes
-		private void Initialize(CommandContext ctx)
-		{
+		private void Initialize(CommandContext ctx) {
 			if (this.Manager == null)
-			{
 				this.Manager = new ShopManager(ctx);
-			}
 		}
 
 		// -------------------------------------------------------------> NAVEGAÇÃO <-------------------------------------------------------------------
-		[Command("loja")]
-		[Description("Loja do servidor")]
-		public async Task Run(CommandContext ctx)
-		{
+		[Command("loja"), Aliases("shop"),
+		 Description("Loja do servidor")]
+		public async Task Loja(CommandContext ctx) {
+			await ctx.TriggerTypingAsync();
+			
 			// Inicializa as classes
 			this.Initialize(ctx);
 
@@ -38,8 +35,8 @@ namespace Hanna.Commands
 			DiscordMessage msg = await ctx.RespondAsync("Carregando...");
 
 			// Inicia o comando
-			try
-			{ await this.SendCategories(ctx, msg, ctx.Message.Author);
+			try {
+				await this.SendCategories(ctx, msg, ctx.Message.Author);
 
 			} catch (Exception err)
 			{ await Error(msg, err); }

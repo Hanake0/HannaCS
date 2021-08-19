@@ -12,6 +12,13 @@ using DSharpPlus.EventArgs;
 
 using DSharpPlus.Interactivity.Extensions;
 
+using Hanna.Commands;
+using DSharpPlus.CommandsNext.Exceptions;
+using System.Collections.Generic;
+using DSharpPlus.CommandsNext.Attributes;
+using Hanna.Util;
+using System.Linq;
+
 namespace Hanna {
 	public class Bot {
 		// Client e extensões
@@ -33,7 +40,6 @@ namespace Hanna {
 				MinimumLogLevel = LogLevel.Information,
 				LogTimestampFormat = "MMM dd yyyy - hh:mm:ss tt",
 			});
-			this.Client.Ready += this.OnReady;
 
 			// Configurações do command handler
 			this.Commands = this.Client.UseCommandsNext(new CommandsNextConfiguration {
@@ -42,18 +48,22 @@ namespace Hanna {
 				EnableDms = true,
 				CaseSensitive = false,
 				IgnoreExtraArguments = true,
-
 			});
 
 			this.Interactivity = this.Client.UseInteractivity(new InteractivityConfiguration {
 				Timeout = TimeSpan.FromMinutes(1),
 			});
 
+			// Registra os eventos
+			this.Client.Ready += this.OnReady;
+			this.Commands.CommandErrored += this.OnCommandErroredAsync;
+
+
 			// Registra as classes de comandos
-			this.Commands.RegisterCommands<Commands.Util>();
+			this.Commands.RegisterCommands<Commands.UtilsModule>();
 			this.Commands.RegisterCommands<Commands.ShopCommand>();
-			this.Commands.RegisterCommands<Commands.Suggestion>();
-			this.Commands.RegisterCommands<Commands.APIs>();
+			this.Commands.RegisterCommands<Commands.SuggestionCommand>();
+			this.Commands.RegisterCommands<Commands.APIModule>();
 
 			await this.Client.ConnectAsync();
 			await Task.Delay(-1);
@@ -68,6 +78,42 @@ namespace Hanna {
 					$"({user.Id}) com sucesso!");
 
 			return Task.CompletedTask;
+		}
+
+		private async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs args) {
+
+			// TODO: configurar canais sem logging
+			if(args.Context.Channel.Id == 827661920974274591) return;
+			await args.Context.TriggerTypingAsync();
+
+			// Caso o motivo do erro seja algum atributo
+			if(args.Exception is ChecksFailedException checksException) {
+				IReadOnlyList<CheckBaseAttribute> failedChecks = checksException.FailedChecks;
+
+				string errorMsg = "Você não pode executar esse comando pois:\n";
+				foreach (CheckBaseAttribute failedCheck in failedChecks) {
+
+					// Caso algum dos atributos seja cooldown, retorna uma mensagem de aviso imediatamente
+					if(failedCheck is CooldownAttribute cdAttribute) {
+						TimeSpan cooldown = cdAttribute.GetRemainingCooldown(args.Context);
+
+						await args.Context.RespondAsync(EmbedUtils.WarningBuilder
+							.WithDescription(String.Format("Por favor **aguarde {0:F0}m {1:m\\.ff}s** ",
+								cooldown.TotalMinutes, cooldown) + "antes de usar esse comando novamente"));
+						return;
+					}
+
+					if (failedCheck is RequirePermissionsAttribute reqPerm)
+						errorMsg += $"\tprecisa das permissoes: {reqPerm.Permissions.ToPermissionString()}\n";
+				}
+
+				await args.Context.RespondAsync(EmbedUtils.ErrorBuilder
+					.WithDescription(errorMsg));
+				return;
+
+			// Caso seja algum outro erro desconhecido
+			} else
+				await EmbedUtils.Error(args.Context.Message, args.Exception);
 		}
 	}
 }

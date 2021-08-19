@@ -9,18 +9,20 @@ using DSharpPlus.Entities;
 using Hanna.Util;
 
 namespace Hanna.Commands {
-	public class Suggestion : BaseCommandModule{
+	public class SuggestionCommand : BaseCommandModule{
 		public static readonly ulong SuggestionChannelId = 828494435469623356;
 		public static readonly int MinSize = 10;
 
 		[Command("suggestion")]
+		[Cooldown(1, 120, CooldownBucketType.User)]
 		[Aliases("sugestao", "sugestão")]
 		[Description("Usado para sugerir algo á staff")]
 		public async Task RunAsync(CommandContext ctx,
-			[Description("sugestão"), RemainingText] string suggestion) {
+			[Description("sugestão"), RemainingText] string sugestão) {
+			await ctx.TriggerTypingAsync();
 
 			// Envia um aviso caso a mensagem tenha menos que {MinSize} caracteres
-			if (suggestion.Length < MinSize) {
+			if (sugestão.Length < MinSize) {
 				await ctx.RespondAsync(EmbedUtils.WarningBuilder
 					.WithDescription($"Sua sugestão deve ter mais que {MinSize} caracteres."));
 				return;
@@ -30,7 +32,7 @@ namespace Hanna.Commands {
 			DiscordEmbedBuilder builder = EmbedUtils.WarningBuilder
 					.WithAuthor("Sugestão")
 					.AddField("Autor:", $"{ctx.User.Username}#{ctx.User.Discriminator}")
-					.AddField($"Texto da sugestão:", suggestion)
+					.AddField($"Texto da sugestão:", sugestão)
 					.WithFooter($"Id: {ctx.User.Id}", ctx.User.AvatarUrl)
 					.WithTimestamp(DateTime.Now);
 

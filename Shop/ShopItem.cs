@@ -6,11 +6,11 @@ using DSharpPlus.Entities;
 
 namespace Hanna.Shop
 {
-	enum Category { Cores, VIPs, Miscelânea }
-	enum Currency { Coins, Gems }
-	enum Time { UmDia, TrêsDias, SeteDias }
+	public enum Category { Cores, VIPs, Miscelânea }
+	public enum Currency { Coins, Gems }
+	public enum Time { UmDia, TrêsDias, SeteDias }
 
-	abstract class ShopItem {
+	public abstract class ShopItem {
 		public DiscordColor DiscColor;
 		public DiscordEmoji Emoji;
 		public bool Temporary;

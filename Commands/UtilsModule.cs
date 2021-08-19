@@ -7,11 +7,21 @@ using DSharpPlus.Entities;
 using System.Threading.Tasks;
 
 using Hanna.Util;
-using Hanna.Util.JsonModels;
+using System;
 
 namespace Hanna.Commands {
-	public class Util : BaseCommandModule {
+	public class UtilsModule : BaseCommandModule {
+
+		[Hidden]
+		[Command("test")]
+		[RequirePermissions(Permissions.Administrator)]
+		public async Task TestAsync(CommandContext ctx) {
+			await ctx.TriggerTypingAsync();
+			throw new Exception("Deu bom!");
+		}		
+		
 		[Command("ping")]
+		[Cooldown(2, 10, CooldownBucketType.User)]
 		[Description("Verifica o ping do bot")]
 		public async Task PingAsync(CommandContext ctx) {
 			await ctx.TriggerTypingAsync();
@@ -28,33 +38,7 @@ namespace Hanna.Commands {
 
 			await ctx.RespondAsync(builder);
 		}
-
-		[Command("Online")]
-		[Description("Verifica se um servidor do minecraft está online")]
-		public async Task OnlineAsync(CommandContext ctx,
-			[Description("IP do servidor a checar")]string serverIp,
-			[Description("Porta do servidor")]int serverPort = 0) {
-
-			// Usa o WebClient do bot para acessar a API
-			McStatusAPIResponse result =  await WebClient.GetMcServerInfoAsync(serverIp, serverPort);
-
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-				.WithColor(result.online ? new("#07a602")/** Verde */ : new("#bd1b0f")) // Vermelho
-				.WithAuthor($"Server: {serverIp}", null, 
-					$"https://mcstatus.snowdev.com.br/api/favicon/{serverIp}/favicon.png");
-
-			// Caso o server esteja offline, não tenta mostrar nenhuma informação
-			string embedDesc = "";
-			if (result.online) embedDesc +=
-					$"**Players**: {result.players_online}/{result.max_players}\n" +
-					$"**Versão**: {result.version}\n" +
-					$"**Ping**: {result.ping} ms";
-
-			else embedDesc += "**Servidor offline**";
-
-			await ctx.RespondAsync(builder.WithDescription(embedDesc));
-		}
-
+		
 		[Command("say"), Aliases("diga")]
 		public async Task Say(CommandContext ctx,
 		[Description("O canal para enviar a mensagem")] DiscordChannel channel,
@@ -64,7 +48,8 @@ namespace Hanna.Commands {
 				await channel.TriggerTypingAsync();
 				await channel.SendMessageAsync(text);
 			} else
-				await ctx.RespondAsync("Você não tem permissão para enviar mensagens neste canal");
+				await ctx.RespondAsync(EmbedUtils.ErrorBuilder
+					.WithDescription("Você não tem permissão para enviar mensagens neste canal!"));
 		}
 
 		[Command("say")]
@@ -73,10 +58,13 @@ namespace Hanna.Commands {
 			_ = ctx.Message.DeleteAsync();
 			await ctx.TriggerTypingAsync();
 			DiscordMessage referencedMsg = ctx.Message.ReferencedMessage;
-			if (referencedMsg != null)
+			if (referencedMsg != null){
+				await ctx.TriggerTypingAsync();
 				await referencedMsg.RespondAsync(text);
-			else
+			} else {
+				await ctx.TriggerTypingAsync();
 				await ctx.Channel.SendMessageAsync(text);
+			}
 		}
 	}
 }
