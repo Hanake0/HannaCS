@@ -17,7 +17,6 @@ using DSharpPlus.CommandsNext.Exceptions;
 using System.Collections.Generic;
 using DSharpPlus.CommandsNext.Attributes;
 using Hanna.Util;
-using System.Linq;
 
 namespace Hanna {
 	public class Bot {
@@ -99,8 +98,8 @@ namespace Hanna {
 						TimeSpan cooldown = cdAttribute.GetRemainingCooldown(args.Context);
 
 						await args.Context.RespondAsync(EmbedUtils.WarningBuilder
-							.WithDescription(String.Format("Por favor **aguarde {0:F0}m {1:m\\.ff}s** ",
-								cooldown.TotalMinutes, cooldown.Seconds) + "antes de usar esse comando novamente"));
+							.WithDescription(String.Format("Por favor **aguarde {0:F0}m {1:F2}s** ",
+								cooldown.TotalMinutes, cooldown.TotalSeconds%60) + "antes de usar esse comando novamente"));
 						return;
 					}
 
