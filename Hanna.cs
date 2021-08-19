@@ -99,7 +99,7 @@ namespace Hanna {
 
 						await args.Context.RespondAsync(EmbedUtils.WarningBuilder
 							.WithDescription(String.Format("Por favor **aguarde {0:F0}m {1:m\\.ff}s** ",
-								cooldown.TotalMinutes, cooldown) + "antes de usar esse comando novamente"));
+								cooldown.TotalMinutes, cooldown.Seconds) + "antes de usar esse comando novamente"));
 						return;
 					}
 
@@ -112,7 +112,7 @@ namespace Hanna {
 				return;
 
 			// Caso seja algum outro erro desconhecido
-			} else
+			} else if(args.Exception is not CommandNotFoundException)
 				await EmbedUtils.Error(args.Context.Message, args.Exception);
 		}
 	}
