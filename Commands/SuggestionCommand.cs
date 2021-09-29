@@ -10,7 +10,7 @@ using Hanna.Util;
 
 namespace Hanna.Commands {
 	public class SuggestionCommand : BaseCommandModule{
-		public static readonly ulong SuggestionChannelId = 828494435469623356;
+		public static readonly ulong SuggestionChannelId = 892849941125398528;
 		public static readonly int MinSize = 10;
 
 		[Command("suggestion")]
