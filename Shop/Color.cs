@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -10,10 +11,9 @@ namespace Hanna.Shop
 		public DiscordRole Role;
 		public ulong RoleId { get; private set; }
 		public Color() {}
-		public override async Task<bool> Buy(CommandContext ctx, DiscordUser user, Currency currency, Time time)
-		{
-			await Task.Delay(2);
-			return false;
+
+		public override async Task<bool> Buy(DiscordUser user, string cName, string tOptName) {
+			throw new NotImplementedException("Ainda nao e possivel comprar cores");
 		}
 	}
 }

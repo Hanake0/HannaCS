@@ -16,12 +16,12 @@ namespace Hanna.Shop
 		public bool Temporary;
 		public string ImageLink;
 		public string Name;
-		public Category Category;
+		public string Category;
 		public string[] Aliases;
 		public ulong DefValue;
 		public string Description;
 
-		public abstract Task<bool> Buy(CommandContext ctx, DiscordUser user, Currency currency, Time time);
+		public abstract Task<bool> Buy(DiscordUser user, string cName, string tOptName);
 		public ulong GetValue( Currency currency, Time time)
 		{
 			ulong def = currency switch

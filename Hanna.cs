@@ -14,6 +14,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 
 using Hanna.Commands;
+using Hanna.Configuration;
 using Hanna.Cosmos;
 using Hanna.Cosmos.Entitys;
 using Hanna.Util;
@@ -26,9 +27,9 @@ using Microsoft.Extensions.Logging;
 namespace Hanna {
 	public class Bot {
 		// Client e extensões
-		public DiscordClient Client { get; private set; }
+		public DiscordClient          Client        { get; private set; }
 		public InteractivityExtension Interactivity { get; private set; }
-		public CommandsNextExtension Commands { get; private set; }
+		public CommandsNextExtension  Commands      { get; private set; }
 
 		// Cosmos DB
 		public static UsersContext UsersContext { get; private set; }
@@ -40,30 +41,31 @@ namespace Hanna {
 
 			// Define o User-Agent do WebClient
 			Util.WebClient.Client.DefaultRequestHeaders
-				.Add("User-Agent", "UnReal - Hanna Bot");
+			   .Add("User-Agent", "UnReal - Hanna Bot");
 
 			// Configurações do client
 			this.Client = new DiscordClient(new DiscordConfiguration {
-				Token = Environment.GetEnvironmentVariable("DISCORD_TOKEN"),
-				TokenType = TokenType.Bot,
-				AutoReconnect = true,
-				MinimumLogLevel = LogLevel.Information,
+				Token              = Environment.GetEnvironmentVariable("DISCORD_TOKEN"),
+				TokenType          = TokenType.Bot,
+				AutoReconnect      = true,
+				MinimumLogLevel    = LogLevel.Information,
 				LogTimestampFormat = "MMM dd yyyy - hh:mm:ss tt",
+				Intents            = DiscordIntents.All,
 			});
 
 			// Depedency Injection
 			ServiceProvider services = new ServiceCollection()
-				.AddSingleton(this)
-				.BuildServiceProvider();
+			   .AddSingleton(this)
+			   .BuildServiceProvider();
 
 			// Configurações do command handler
 			this.Commands = this.Client.UseCommandsNext(new CommandsNextConfiguration {
-				StringPrefixes = new string[] { Environment.GetEnvironmentVariable("PREFIX") },
-				EnableMentionPrefix = true,
-				EnableDms = true,
-				CaseSensitive = false,
+				StringPrefixes       = new string[] {Environment.GetEnvironmentVariable("PREFIX")},
+				EnableMentionPrefix  = true,
+				EnableDms            = true,
+				CaseSensitive        = false,
 				IgnoreExtraArguments = true,
-				Services = services,
+				Services             = services,
 			});
 
 			this.Interactivity = this.Client.UseInteractivity(new InteractivityConfiguration {
@@ -71,15 +73,15 @@ namespace Hanna {
 			});
 
 			// Registra os eventos
-			this.Client.Ready += this.OnReady;
+			this.Client.Ready            += this.OnReady;
+			this.Client.GuildMemberAdded += this.onGuildMemberAdd;
 			//this.Client.MessageCreated += this.OnMessageCreatedAsync;
 			this.Commands.CommandErrored += this.OnCommandErroredAsync;
-
 
 			// Registra as classes de comandos
 			this.Commands.RegisterCommands(Assembly.GetExecutingAssembly());
 			//_ = new APIsModule(this);
-			
+
 			//this.Commands.RegisterCommands<Commands.ShopCommand>();
 			//this.Commands.RegisterCommands<Commands.SuggestionCommand>();
 			//this.Commands.RegisterCommands<Commands.UtilsModule>();
@@ -92,50 +94,67 @@ namespace Hanna {
 			DiscordUser user = this.Client.CurrentUser;
 
 			this.Client.Logger
-				.LogInformation(LoggerEvents.Startup,
+			   .LogInformation(LoggerEvents.Startup,
 					$"Logado como {user.Username}#{user.Discriminator}" +
 					$"({user.Id}) com sucesso!");
 
 			return Task.CompletedTask;
 		}
 
-		private async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs args) {
-			if(args.Exception is CommandNotFoundException ||
-				args.Exception is ArgumentException) return;
+		private async Task onGuildMemberAdd(DiscordClient client, GuildMemberAddEventArgs args)
+			=> await Task.Run(async () => {
+				if (Server.ServerId != args.Guild.Id) return;
 
-			// TODO: configurar canais sem logging
-			if(args.Context.Channel.Id == 827661920974274591) return;
-			await args.Context.TriggerTypingAsync();
+				DiscordChannel channel = args.Guild.GetChannel(Server.PrimaryChannelId);
+				await channel.TriggerTypingAsync();
+				foreach (ulong roleId in Server.BaseRoleIds)
+					await args.Member
+					   .GrantRoleAsync(args.Guild.Roles[roleId], "Member role");
 
-			// Caso o motivo do erro seja algum atributo
-			if(args.Exception is ChecksFailedException checksException) {
-				IReadOnlyList<CheckBaseAttribute> failedChecks = checksException.FailedChecks;
+				DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+				   .WithAuthor(args.Member.DisplayName, null, args.Member.AvatarUrl)
+				   .WithDescription($"{args.Member.Mention} acaba de entrar, gostosuras ou travessuras?!")
+				   .WithImageUrl(
+						"https://cdn.discordapp.com/attachments/828500887218946058/895436069825298442/anime-halloween.gif")
+				   .WithFooter($"Temos {args.Guild.MemberCount} cadáveres!")
+				   .WithTimestamp(DateTime.Now);
 
-				string errorMsg = "Você não pode executar esse comando pois:\n";
-				foreach (CheckBaseAttribute failedCheck in failedChecks) {
+				await channel.SendMessageAsync(builder);
+			});
 
-					// Caso algum dos atributos seja cooldown, retorna uma mensagem de aviso imediatamente
-					if(failedCheck is CooldownAttribute cdAttribute) {
-						TimeSpan cooldown = cdAttribute.GetRemainingCooldown(args.Context);
+		private async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs args)
+			=> await Task.Run(async () => {
+				if (args.Exception is CommandNotFoundException or ArgumentException) return;
+				
+				if (args.Context.Channel.Id == Server.PrimaryChannelId) return;
+				await args.Context.TriggerTypingAsync();
 
-						await args.Context.RespondAsync(EmbedUtils.WarningBuilder
-							.WithDescription(String.Format("Por favor **aguarde {0:F0}m {1:F2}s** ",
-								cooldown.TotalMinutes, cooldown.TotalSeconds%60) + "antes de usar esse comando novamente"));
-						return;
-					}
+				// Caso o motivo do erro seja algum atributo
+				if (args.Exception is ChecksFailedException checksException) {
+					IReadOnlyList<CheckBaseAttribute> failedChecks = checksException.FailedChecks;
 
-					if (failedCheck is RequirePermissionsAttribute reqPerm)
-						errorMsg += $"\tprecisa das permissoes: {reqPerm.Permissions.ToPermissionString()}\n";
-				}
+					string errorMsg = "Você não pode executar esse comando pois:\n";
+					foreach (CheckBaseAttribute failedCheck in failedChecks)
+						switch (failedCheck) {
+							// Caso algum dos atributos seja cooldown, retorna uma mensagem de aviso imediatamente
+							case CooldownAttribute cdAttribute:
+								TimeSpan cooldown = cdAttribute.GetRemainingCooldown(args.Context);
 
-				await args.Context.RespondAsync(EmbedUtils.ErrorBuilder
-					.WithDescription(errorMsg));
-				return;
+								await args.Context.RespondAsync(EmbedUtils.WarningBuilder
+								   .WithDescription(String.Format("Por favor **aguarde {0:F0}m {1:F2}s** ",
+										cooldown.TotalMinutes, cooldown.TotalSeconds % 60) + "antes de usar esse comando novamente"));
+								return;
+							case RequirePermissionsAttribute reqPerm:
+								errorMsg += $"\tprecisa das permissoes: {reqPerm.Permissions.ToPermissionString()}\n";
+								break;
+						}
 
-			// Caso seja algum outro erro desconhecido
-			} else
-				await EmbedUtils.Error(args.Context.Message, args.Exception);
-		}
+					await args.Context.RespondAsync(EmbedUtils.ErrorBuilder
+					   .WithDescription(errorMsg));
+
+					// Caso seja algum outro erro desconhecido
+				} else await EmbedUtils.Error(args.Context.Message, args.Exception);
+			});
 
 		/**
 		private Task OnMessageCreatedAsync(DiscordClient client, MessageCreateEventArgs args) {

@@ -23,7 +23,7 @@ namespace Hanna.Commands {
 		}
 
 		private async Task OnButtonInteraction(DiscordClient client, ComponentInteractionCreateEventArgs args)
-		=> Task.Run(async () => {
+		=> await Task.Run(async () => {
 			string[] action = args.Id.Split("_");
 
 			Task interactionTask = action[0] switch {

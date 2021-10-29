@@ -7,19 +7,122 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity.Enums;
 
+using Hanna.Configuration;
 using Hanna.Shop;
 using Hanna.Util;
 
-namespace Hanna.Commands
-{
+namespace Hanna.Commands {
 	public class ShopCommand : BaseCommandModule {
 		public ShopManager Manager { get; private set; }
+		public Bot         Hanna   { get; private set; }
 
-		// Inicializa as classes
-		private void Initialize(CommandContext ctx) {
-			if (this.Manager == null)
-				this.Manager = new ShopManager(ctx);
+		public ShopCommand(Bot hanna) {
+			this.Hanna                                    =  hanna;
+			this.Manager                                  =  new ShopManager(hanna);
+			this.Hanna.Client.ComponentInteractionCreated += this.OnButtonInteraction;
+		}
+
+		private async Task OnButtonInteraction(DiscordClient client, ComponentInteractionCreateEventArgs args)
+			=> await Task.Run(async () => {
+				// Separa o path por "_"
+				string[] actions = args.Id.Split("_");
+				if (actions[0] != "loja") return Task.CompletedTask;
+
+				// Busca a mensagem referenciado no canal ja que ela pode nao estar no cache
+				DiscordMessage reference = await args.Channel.GetMessageAsync(args.Message.Reference.Message.Id);
+
+				if (reference is null || (reference.Author.Id != args.User.Id))
+					return args.Channel.SendMessageAsync(this.GetWrongAuthorMessage(args.User));
+
+				return actions[1] switch {
+					// Volta para a lista de categorias
+					"categories" => Task.Run(async () => {
+						DiscordMessageBuilder iResponse;
+
+						try {
+							iResponse = await this.GetCategories(args.User);
+						} catch (Exception e) {
+							iResponse = ShopCommand.ShowError(e);
+						}
+						
+						await args.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage,
+							new DiscordInteractionResponseBuilder(iResponse));
+					}),
+
+					// Mostra a lista de itens de uma categoria
+					"itens" => Task.Run(async () => {
+						DiscordMessageBuilder iResponse;
+
+						try {
+							if (actions[2] == "picker") iResponse = await this.GetItens(args.User, args.Values[0]);
+							else iResponse                        = await this.GetItens(args.User, actions[2], actions[3]);
+						} catch (Exception e) {
+							iResponse = ShopCommand.ShowError(e);
+						}
+						
+						await args.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage,
+							new DiscordInteractionResponseBuilder(iResponse));
+					}),
+
+					// Mostra as informaçoes de um item especifico
+					"item" => Task.Run(async () => {
+						DiscordMessageBuilder iResponse;
+
+						try {
+							iResponse = await this.GetItem(args.User, actions[2], actions[3]);
+						} catch (Exception e) {
+							iResponse = ShopCommand.ShowError(e);
+						}
+						
+						await args.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage,
+							new DiscordInteractionResponseBuilder(iResponse));
+					}),
+
+					// Confirma a compra de um item
+					"confirm" => Task.Run(async () => {
+						DiscordMessageBuilder iResponse;
+
+						try {
+							iResponse = await this.GetConfirm(args.User, actions[2], actions[3], actions[4]);
+						} catch (Exception e) {
+							iResponse = ShopCommand.ShowError(e);
+						}
+						
+						await args.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage,
+							new DiscordInteractionResponseBuilder(iResponse));
+					}),
+
+					// Compra o item e mostra uma mensagem de erro ou sucesso
+					"buy" => Task.Run(async () => {
+						//await args.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate, null);
+						
+						DiscordMessageBuilder iResponse;
+						ShopItem              item = this.Manager.ShopItens.Single(i => i.Name == actions[2]);
+
+						try {
+							await item.Buy(args.User, actions[3], actions[4]);
+							iResponse = await this.Success(args.User, actions[2], actions[3], actions[4]);
+						} catch (Exception e) {
+							iResponse = await ShopCommand.ShowError(e, args.User, item, actions[4]);
+						}
+						
+						await args.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage,
+							new DiscordInteractionResponseBuilder(iResponse));
+					}),
+					_ => Task.CompletedTask,
+				};
+			});
+
+		private DiscordMessageBuilder GetWrongAuthorMessage(DiscordUser user) {
+			DiscordEmbedBuilder builder = EmbedUtils.ErrorBuilder
+			   .WithDescription("Você não pode usar a loja de outra pessoa!");
+
+			return new DiscordMessageBuilder()
+			   .WithContent(user.Mention)
+			   .WithEmbed(builder);
 		}
 
 		// -------------------------------------------------------------> NAVEGAÇÃO <-------------------------------------------------------------------
@@ -27,351 +130,265 @@ namespace Hanna.Commands
 		 Description("Loja do servidor")]
 		public async Task Loja(CommandContext ctx) {
 			await ctx.TriggerTypingAsync();
-			
-			// Inicializa as classes
-			this.Initialize(ctx);
 
 			// Envia a primeira mensagem que vai ser editada
-			DiscordMessage msg = await ctx.RespondAsync("Carregando...");
-
-			// Inicia o comando
-			try {
-				await this.SendCategories(ctx, msg, ctx.Message.Author);
-
-			} catch (Exception err)
-			{ await Error(msg, err); }
+			await ctx.RespondAsync(await this.GetCategories(ctx.User));
 		}
 
-		private async Task<bool> SendCategories(CommandContext ctx, DiscordMessage msg, DiscordUser user)
-		{
+		private async Task<DiscordMessageBuilder> GetCategories(DiscordUser user) {
 			// Cria o embed
 			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-				.WithAuthor($"Bem vindo(a) a loja {user.Username}", null, ctx.Client.CurrentUser.GetAvatarUrl(ImageFormat.Png))
-				.AddField("🎨 Cores", "Cargos bonitos para mudar a cor do seu nome", true)
-				.AddField("🎫 VIP", "Cargos com vantagens bonitas", true)
-				.AddField("🧩 Misc", "Coisas diversas para você comprar", true)
-				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png");
+			   .WithAuthor($"Bem vindo(a) a loja {user.Username}",
+					null, this.Hanna.Client.CurrentUser.GetAvatarUrl(ImageFormat.Png))
+			   .WithFooter("Carteira: 💵 000 • 💎 000",
+					"https://twemoji.maxcdn.com/2/72x72/1f4b0.png");
 
-			// Separa os emojis
-			List<DiscordEmoji> emojis = new()
-			{
-				DiscordEmoji.FromName(ctx.Client, ":art:"),
-				DiscordEmoji.FromName(ctx.Client, ":ticket:"),
-				DiscordEmoji.FromName(ctx.Client, ":jigsaw:")
+			// Adiciona cada categoria como um Field no embed
+			foreach (ShopCategory category in this.Manager.Categories)
+				builder.AddField(category.DisplayName, category.SmallDescription, true);
+
+
+			// Create the options for the user to pick
+			List<DiscordSelectComponentOption> options = this.Manager.Categories
+			   .Select(category => new DiscordSelectComponentOption(
+					label: category.Name,
+					value: category.Name,
+					description: category.SmallDescription,
+					isDefault: false,
+					emoji: new DiscordComponentEmoji(
+						DiscordEmoji.FromName(this.Hanna.Client, category.EmojiName)))
+				).ToList();
+
+			// Make the dropdown
+			DiscordSelectComponent dropdown = new("loja_itens_picker", null, options);
+
+			return new DiscordMessageBuilder()
+			   .WithEmbed(builder)
+			   .AddComponents(dropdown);
+		}
+
+		private async Task<DiscordMessageBuilder> GetItens(
+			DiscordUser user, string categoryName, string indexString = "0") {
+			int ipe = 3; // Itens Per Embed
+
+			ShopCategory category = this.Manager.Categories
+			   .Single(c => c.Name == categoryName);
+
+			// Pula ate o index e pega 6 itens da loja com essa categoria
+			int index = int.Parse(indexString);
+			ShopItem[] itens = this.Manager.ShopItens
+			   .Where(i => i.Category == categoryName)
+			   .Skip(index * ipe)
+			   .Take(ipe)
+			   .ToArray();
+
+
+			int count = this.Manager.ShopItens.Count(i => i.Category == categoryName);
+
+			// Adiciona️◀ ⤴ ▶
+			List<DiscordButtonComponent> navButtons = new() {
+				new DiscordButtonComponent(ButtonStyle.Primary, $"loja_itens_{categoryName}_{index - 1}",
+					null, index == 0, new DiscordComponentEmoji("◀")),
+				new DiscordButtonComponent(ButtonStyle.Primary, "loja_categories",
+					null, false, new DiscordComponentEmoji("↪")),
+				new DiscordButtonComponent(ButtonStyle.Primary, $"loja_itens_{categoryName}_{index + 1}",
+					null, ((index * ipe) + ipe) >= count, new DiscordComponentEmoji("▶"))
 			};
 
-			// Envia o embed
-			DiscordMessage sentMsg = await EmbedUtils.SendEmbedAsync(msg, builder.Build());
+			// Adiciona os fields e botoes
+			DiscordEmbedBuilder          builder        = new();
+			List<DiscordButtonComponent> optionsButtons = new();
+			foreach (ShopItem item in itens) {
+				// Adiciona o botão
+				optionsButtons.Add(new DiscordButtonComponent(ButtonStyle.Secondary,
+					$"loja_item_{item.Name}_none", null, false,
+					new DiscordComponentEmoji(item.Emoji)));
 
-			// Reage e espera a reação correta
-			DiscordEmoji emoji;
-			bool reacted;
-			try { (emoji, reacted) = await EmbedUtils.ReactAndAwaitAsync(sentMsg, user, emojis); }
-
-			// Termina em caso de timeout
-			catch { return await End(sentMsg); }
-
-			// Caso tenha reagido, passa para outro handler
-			Category category = ShopManager.GetCategory(emoji.GetDiscordName());
-			return await this.SendItens(ctx, msg, user, category);
-		}
-
-		private async Task<bool> SendItens(CommandContext ctx, DiscordMessage msg, DiscordUser user, Category category, int index = 0)
-		{
-			DiscordEmbedBuilder builder = new();
-			List<DiscordEmoji> emojis = new();
-			ShopItem[] itens = this.Manager.GroupBy(category, 3, index * 3);
-			
-			// Adiciona os fields
-			foreach (ShopItem item in itens)
-			{
-				emojis.Add(item.Emoji);
-				builder.AddField(item.Name, 
+				// Adiciona o field
+				builder.AddField(item.Name,
 					(item.Temporary ? "**Temporário**" : "**Permanente**") + "\n" +
-					(item.Temporary ? $"7 Dias:\n" : "" ) + 
+					(item.Temporary ? $"7 Dias:\n" : "") +
 					$"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n" +
-					$"💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true);
+					$"💎 {item.GetValue(Currency.Gems,  Time.SeteDias)}", true);
 			}
 
-			int count = this.Manager.GetList(category).Count;
-
-			// Adiciona ⤴️ ◀️ e ▶️ respectivamente
-			emojis.Insert(0, DiscordEmoji.FromName(ctx.Client, ":arrow_heading_up:"));
-			if (index > 0) emojis.Insert(0, DiscordEmoji.FromName(ctx.Client, ":arrow_backward:"));
-			if (count > ((index + 1)* 3))
-				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":arrow_forward:"));
-
 			// Envia o embed
 			builder
-				.WithColor(itens.Length!=0 ? itens.First().DiscColor : new DiscordColor("#000000"))
-				.WithAuthor($"{category} {new string(' ', builder.Fields.Count * 15)}" +
-					$"{index + 1}/{(int)Math.Ceiling((decimal)count / 3)}", null, ShopManager.GetImageUrl(category))
-				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
-				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await EmbedUtils.SendEmbedAsync(msg, builder.Build());
+			   .WithColor(itens.Length != 0 ? itens.First().DiscColor : new DiscordColor("#000000"))
+			   .WithAuthor(
+					$"{categoryName} {new string(' ', builder.Fields.Count * 15)}" +
+					$"{index + 1}/{(int)Math.Ceiling((decimal)count / ipe)}"
+				  , null, category.ImageUrl)
+			   .WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
+			   .WithTimestamp(DateTime.Now);
 
-			// Reage e espera a reação correta
-			DiscordEmoji emoji;
-			bool reacted;
-			try { (emoji, reacted) = await EmbedUtils.ReactAndAwaitAsync(sentMsg, user, emojis); }
+			DiscordMessageBuilder msgBuilder = new DiscordMessageBuilder().WithEmbed(builder);
+			if (optionsButtons.Count > 0)
+				msgBuilder.AddComponents(optionsButtons);
 
-			// Termina em caso de timeout
-			catch { return await End(sentMsg); }
-
-			// Caso seja alguma opção de navegação
-			string name = emoji.GetDiscordName();
-			if (name == ":arrow_heading_up:") return await this.SendCategories(ctx, sentMsg, user);
-			if (name == ":arrow_backward:") return await this.SendItens(ctx, sentMsg, user, category, index - 1);
-			if (name == ":arrow_forward:") return await this.SendItens(ctx, sentMsg, user, category, index + 1);
-
-			// Descobre o item escolhido
-			ShopItem reactedItem = itens.First(i => i.Emoji.GetDiscordName() == name);
-
-			// Passa para outro handler
-			return await this.SendItem(ctx, sentMsg, user, reactedItem);
+			return msgBuilder.AddComponents(navButtons);
 		}
 
-		private async Task<bool> SendItem(CommandContext ctx, DiscordMessage msg, DiscordUser user, ShopItem item)
-		{
-			// Adiciona os emojis
-			List<DiscordEmoji> emojis = new();
-			if(item.Temporary)
-			{
-				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":one:"));
-				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":three:"));
-				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":seven:"));
+		private async Task<DiscordMessageBuilder> GetItem(
+			DiscordUser user, string itemName, string tOptionName = "none") {
+			ShopItem item  = this.Manager.ShopItens.Single(c => c.Name == itemName);
+			int      index = this.Manager.ShopItens.IndexOf(item);
+			int      count = this.Manager.ShopItens.Count(i => i.Category == item.Category);
+			ShopItem prevItem = this.Manager.ShopItens.SingleOrDefault(i =>
+				this.Manager.ShopItens.IndexOf(i) == (index - 1)) ?? item;
+			ShopItem nextItem = this.Manager.ShopItens.SingleOrDefault(i =>
+				this.Manager.ShopItens.IndexOf(i) == (index + 1)) ?? item;
+
+			// Adiciona️◀ ⤴ ▶
+			List<DiscordButtonComponent> navButtons = new() {
+				new DiscordButtonComponent(ButtonStyle.Primary, $"loja_item_{prevItem.Name}_{tOptionName}",
+					null, index == 0, new DiscordComponentEmoji("◀")),
+				new DiscordButtonComponent(ButtonStyle.Primary,
+					tOptionName == "none"
+						? $"loja_itens_{item.Category}_{Math.Floor(index / 3f)}"
+						: $"loja_item_{itemName}_none", null, false, new DiscordComponentEmoji("↪")),
+				new DiscordButtonComponent(ButtonStyle.Primary, $"loja_item_{nextItem.Name}_{tOptionName}",
+					null, (index + 1) >= count, new DiscordComponentEmoji("▶"))
+			};
+
+			// Adiciona os fields e botoes
+			DiscordEmbedBuilder          builder        = new();
+			List<DiscordButtonComponent> optionsButtons = new();
+
+			// Caso seja permanente
+			bool hasTOpt = tOptionName != "none";
+			if (!item.Temporary || hasTOpt) {
+				string fieldCurrencyValues = "";
+				TemporaryItemOption tOption = this.Manager.TemporaryOptions
+				   .SingleOrDefault(t => t.Name == tOptionName);
+
+				// Adiciona cada moeda disponível
+				foreach (CurrencyOption c in this.Manager.CurrencyOptions) {
+					optionsButtons.Add(new DiscordButtonComponent(ButtonStyle.Success,
+						$"loja_confirm_{itemName}_{c.Name}_{tOptionName}", "Comprar",
+						false, new DiscordComponentEmoji(
+							DiscordEmoji.FromName(this.Hanna.Client, c.EmojiName))));
+
+					fieldCurrencyValues +=
+						$"{c.EmojiName} {Math.Ceiling((item.DefValue / c.BaseDivider) * (item.Temporary && hasTOpt ? tOption.BaseMultiplier : 1))}\n";
+				}
+
+				builder.AddField(item.Temporary && hasTOpt ? tOption.Name : "Item permanente", fieldCurrencyValues);
+
+				// Caso seja temporário
 			} else
-				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":dollar:"));
-			
+				foreach (TemporaryItemOption itemOption in this.Manager.TemporaryOptions) {
+					// Adiciona os botoes de comprar
+					optionsButtons.Add(new DiscordButtonComponent(ButtonStyle.Secondary,
+						$"loja_item_{itemName}_{itemOption.Name}", null,
+						false, new DiscordComponentEmoji(
+							DiscordEmoji.FromName(this.Hanna.Client, itemOption.EmojiName))));
 
-			// Adiciona os fields
-			DiscordEmbedBuilder builder = new();
-			if(item.Temporary)
-			{
-				builder
-					.AddField("1 dia",
-						$"💵 {item.GetValue(Currency.Coins, Time.UmDia)}\n" +
-						$"💎 {item.GetValue(Currency.Gems, Time.UmDia)}", true)
-					.AddField("3 dias",
-						$"💵 {item.GetValue(Currency.Coins, Time.TrêsDias)}\n" +
-						$"💎 {item.GetValue(Currency.Gems, Time.TrêsDias)}", true)
-					.AddField("7 dias",
-						$"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n" +
-						$"💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true);
+					// Adiciona cada moeda disponível
+					string fieldCurrencyValues = this.Manager.CurrencyOptions
+					   .Aggregate("", (current, c) => current +
+							$"{c.EmojiName} {Math.Ceiling((item.DefValue / c.BaseDivider) * itemOption.BaseMultiplier)} {c.Name}\n");
 
-			} else { builder.AddField("Permanente",
-				$"💵 {item.GetValue(Currency.Coins, Time.SeteDias)}\n" +
-				$"💎 {item.GetValue(Currency.Gems, Time.SeteDias)}", true); }
+					builder.AddField(itemOption.Name, fieldCurrencyValues, true);
+				}
 
-			int count = this.Manager.GetList(item.Category).Count;
-			int index = this.Manager.GetList(item.Category).FindIndex(i => i == item);
 
-			// Adiciona ⤴️ ◀️ e ▶️ respectivamente
-			emojis.Insert(0, DiscordEmoji.FromName(ctx.Client, ":arrow_heading_up:"));
-			if (index > 0) emojis.Insert(0, DiscordEmoji.FromName(ctx.Client, ":arrow_backward:"));
-			if (count > index)
-				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":arrow_forward:"));
-
-			// Envia o embed
 			builder
-				.WithColor(item.DiscColor)
-				.WithAuthor($"{item.Name}{new string(' ', item.Temporary ? 40 : 1)}{index + 1}/{count}", null, item.ImageLink)
-				.WithDescription(item.Description)
-				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
-				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await EmbedUtils.SendEmbedAsync(msg, builder.Build());
-
-			// Reage e espera a reação correta
-			DiscordEmoji emoji;
-			bool reacted;
-			try { (emoji, reacted) = await EmbedUtils.ReactAndAwaitAsync(sentMsg, user, emojis); }
-
-			// Termina em caso de timeout
-			catch { return await End(sentMsg); }
-
-			// Caso seja alguma opção de navegação
-			string name = emoji.GetDiscordName();
-			if (name == ":arrow_heading_up:") return await this.SendItens(ctx, sentMsg, user, item.Category, index / 3);
-			if (name == ":arrow_backward:") return await this.SendItem(ctx, sentMsg, user, this.Manager.GetList(item.Category)[index - 1]);
-			if (name == ":arrow_forward:") return await this.SendItem(ctx, sentMsg, user, this.Manager.GetList(item.Category)[index + 1]);
-
-			// Caso queira comprar o item
-			return await this.Confirm(ctx, sentMsg, user, item, name switch 
-			{
-				":one:" => Time.UmDia,
-				":three:" => Time.TrêsDias,
-				":seven:" => Time.SeteDias,
-				_ => Time.SeteDias,
-			});
+			   .WithColor(item.DiscColor)
+			   .WithAuthor($"{item.Name}{new string(' ', 40)}{index + 1}/{count}", null, item.ImageLink)
+			   .WithDescription(item.Description)
+			   .WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
+			   .WithTimestamp(DateTime.Now);
+			return new DiscordMessageBuilder()
+			   .WithEmbed(builder)
+			   .AddComponents(optionsButtons)
+			   .AddComponents(navButtons);
 		}
+
+
 		// -------------------------------------------------------------> NAVEGAÇÃO <-------------------------------------------------------------------
 
 		// ----------------------------------------------------------> INTERATIVIDADE <-----------------------------------------------------------------
-		private async Task<bool> Confirm(CommandContext ctx, DiscordMessage msg, DiscordUser user, ShopItem item, Time time = Time.SeteDias)
-		{
-			ulong carteira = 000;
-			if (carteira < item.GetValue(Currency.Coins, time) && carteira < item.GetValue(Currency.Gems, time))
-				return await this.Reject(ctx, msg, user, item, time);
+		private async Task<DiscordMessageBuilder> GetConfirm(
+			DiscordUser user, string itemName, string currencyName, string tOptionName = "none") {
+			ShopItem item = this.Manager
+			   .ShopItens.Single(i => i.Name == itemName);
 
-			// Adiciona ⤴️
-			List<DiscordEmoji> emojis = new()
-			{
-				DiscordEmoji.FromName(ctx.Client, ":arrow_heading_up:"),
-			};
+			CurrencyOption currency = this.Manager.CurrencyOptions
+			   .SingleOrDefault(o => o.Name == currencyName);
 
-			// Emojis para escolher a moeda
-			if (carteira > item.GetValue(Currency.Coins, time))
-				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":dollar:"));
-			if (carteira > item.GetValue(Currency.Gems, time))
-				emojis.Add(DiscordEmoji.FromName(ctx.Client, ":gem:"));
+			TemporaryItemOption temporaryOption = this.Manager.TemporaryOptions
+			   .SingleOrDefault(o => o.Name == tOptionName);
 
-			// Envia o embed
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-				.WithColor(new DiscordColor("#FFFD84"))
-				.WithThumbnail(item.ImageLink)
-				.WithAuthor("Tem certeza que deseja comprar?", null, "https://garticbot.gg/images/icons/alert.png")
-				.WithDescription($"**Nome:** {item.Name}\n" +
-					$"{(item.Temporary ? $"**Validade:** { ShopManager.FormatTime(time)}" : "")}\n" +
-					$"**Valor:** 💵 {item.GetValue(Currency.Coins, time)} • 💎 {item.GetValue(Currency.Gems, time)}")
-				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
-				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await EmbedUtils.SendEmbedAsync(msg, builder.Build());
-
-			// Reage e espera a reação correta
-			DiscordEmoji emoji;
-			bool reacted;
-			try { (emoji, reacted) = await EmbedUtils.ReactAndAwaitAsync(sentMsg, user, emojis); }
-
-			// Termina em caso de timeout
-			catch { return await End(sentMsg); }
-
-			// Caso tenha reação
-			string name = emoji.GetDiscordName();
-			int index = this.Manager.GetList(item.Category).FindIndex(i => i == item);
-			if (name == ":arrow_heading_up:")
-				return await this.SendItens(ctx, sentMsg, user, item.Category, index / 3);
-
-			Currency currency = name switch 
-				{
-					":dollar:" => Currency.Coins,
-					":gem:" => Currency.Coins,
-					_ => Currency.Coins
-				};
-			try
-			{
-				await item.Buy(ctx, user, currency, time);
-
-				// TODO tirar o dinheiro da carteira
-			}
-			catch (Exception err)
-			{ return await Error(msg, err, item, time); }
-
-			return await this.Success(ctx, sentMsg, user, item, currency, time);
-		}
-
-		private async Task<bool> Success(CommandContext ctx, DiscordMessage msg, DiscordUser user, ShopItem item, Currency currency, Time time = Time.SeteDias)
-		{
-			// Adiciona ⤴️
-			List<DiscordEmoji> emojis = new()
-			{
-				DiscordEmoji.FromName(ctx.Client, ":arrow_heading_up:"),
+			List<DiscordButtonComponent> buttonOptions = new() {
+				new DiscordButtonComponent(ButtonStyle.Success,
+					$"loja_buy_{itemName}_{currency.Name}_{tOptionName}", "Comprar",
+					false, // TODO: verificar se a pessoa pode comprar
+					new DiscordComponentEmoji("💰")
+				),
+				new DiscordButtonComponent(ButtonStyle.Danger,
+					$"loja_item_{itemName}_{tOptionName}", "Cancelar", false,
+					new DiscordComponentEmoji("↪")),
 			};
 
 			// Envia o embed
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-				.WithColor(new DiscordColor("#91FF84"))
-				.WithAuthor("Concluído", null, "https://garticbot.gg/images/icons/hit.png")
-				.WithThumbnail(item.ImageLink)
-				.WithDescription($"o item {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n" +
-					"foi comprado com sucesso!\n\n" +
-					$"**Item:** {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n" +
-					$"**Valor:** {(currency == Currency.Coins ? "💵" : "💎")} {item.GetValue(currency, time)}")
-				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
-				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await EmbedUtils.SendEmbedAsync(msg, builder.Build());
+			DiscordEmbedBuilder builder = EmbedUtils.WarningBuilder
+			   .WithThumbnail(item.ImageLink)
+			   .WithAuthor("Tem certeza que deseja comprar?", null, Embeds.Images.OrangeExclamation)
+			   .WithDescription(
+					$"**Nome:** {item.Name}\n" +
+					$"**Validade:** {(item.Temporary ? $"{tOptionName}" : "Permanente")}\n" +
+					$@"**Valor:** {currency.EmojiName} {Math.Ceiling((item.DefValue / currency.BaseDivider)
+					  * (item.Temporary ? temporaryOption.BaseMultiplier : 1))}")
+			   .WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
+			   .WithTimestamp(DateTime.Now);
 
-			// Reage e espera a reação correta
-			DiscordEmoji emoji;
-			bool reacted;
-			try { (emoji, reacted) = await EmbedUtils.ReactAndAwaitAsync(sentMsg, user, emojis); }
-
-			// Termina em caso de timeout
-			catch { return await End(sentMsg); }
-
-			// Caso tenha reação
-			string name = emoji.GetDiscordName();
-			int index = this.Manager.GetList(item.Category).FindIndex(i => i == item);
-			return await this.SendItens(ctx, sentMsg, user, item.Category, index / 3);
+			return new DiscordMessageBuilder()
+			   .WithEmbed(builder)
+			   .AddComponents(buttonOptions);
 		}
-
-		private async Task<bool> Reject(CommandContext ctx, DiscordMessage msg, DiscordUser user, ShopItem item, Time time = Time.SeteDias)
-		{
-			// Adiciona ⤴️
-			List<DiscordEmoji> emojis = new()
-			{
-				DiscordEmoji.FromName(ctx.Client, ":arrow_heading_up:"),
-			};
-
-			// Envia o embed
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-				.WithColor(new DiscordColor("#FF8484"))
-				.WithAuthor("Cancelado", null, "https://garticbot.gg/images/icons/error.png")
-				.WithThumbnail(item.ImageLink)
-				.WithDescription("Infelizmente você não tem coins,\nnem gems suficientes para" +
-					$"comprar {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n\n" +
-					$"**Item:** {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n" +
-					$"**Valor:** 💵 {item.GetValue(Currency.Coins, time)} • 💎 {item.GetValue(Currency.Gems, time)}\n" +
-					$"**Faltam:** ..")
-				.WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
-				.WithTimestamp(DateTime.Now);
-			DiscordMessage sentMsg = await EmbedUtils.SendEmbedAsync(msg, builder.Build());
-
-			// Reage e espera a reação correta
-			DiscordEmoji emoji;
-			bool reacted;
-			try { (emoji, reacted) = await EmbedUtils.ReactAndAwaitAsync(sentMsg, user, emojis); }
-
-			// Termina em caso de timeout
-			catch { return await End(sentMsg); }
-
-			// Caso tenha reação
-			string name = emoji.GetDiscordName();
-			int index = this.Manager.GetList(item.Category).FindIndex(i => i == item);
-			return await this.SendItens(ctx, sentMsg, user, item.Category, index / 3);
-		}
-
-		private static async Task<bool> Error(DiscordMessage msg, Exception err, ShopItem item, Time time = Time.SeteDias)
-		{
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-				.WithColor(new DiscordColor("#FF8484"))
-				.WithThumbnail(item.ImageLink)
-				.WithAuthor("Cancelado", null, "https://garticbot.gg/images/icons/error.png")
-				.WithDescription($"Infelizmente algo deu errado durante a compra desse item\n\n" +
-				$"**Item:** {item.Name} {(item.Temporary ? $"({ShopManager.FormatTime(time)})" : "")}\n" +
-				$"**Erro:** {err.TargetSite} => {err.GetType()}: `{err.Message}`\n\n```{err.StackTrace}```");
-
-			try { await EmbedUtils.SendEmbedAsync(msg, builder.Build()); return true; }
-			catch { return false; }
-		}
-		private static async Task<bool> Error(DiscordMessage msg, Exception err)
-		{
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-				.WithColor(new DiscordColor("#FF8484"))
-				.WithAuthor("Cancelado", null, "https://garticbot.gg/images/icons/error.png")
-				.WithDescription($"Infelizmente algo deu errado durante a execução do comando\n\n" +
-				$"**Erro:** {err.TargetSite} => {err.GetType()}: `{err.Message}`\n\n```{err.StackTrace}```");
-
-			try { await EmbedUtils.SendEmbedAsync(msg, builder.Build()); return true; }
-			catch { return false; }
-		}
-
-		private static async Task<bool> End(DiscordMessage msg)
-		{
-			DiscordEmbedBuilder builder = new DiscordEmbedBuilder(msg.Embeds[0])
-				.WithFooter("Tempo esgotado", "https://garticbot.gg/images/icons/time.png");
+		
+		private async Task<DiscordMessageBuilder> Success(
+			DiscordUser user, string itemName, string currencyName, string tOptName = "none") {
+			ShopItem            item     = this.Manager.ShopItens.Single(i => i.Name == itemName);
+			CurrencyOption      currency = this.Manager.CurrencyOptions.Single(c => c.Name == currencyName);
+			TemporaryItemOption tOption  = this.Manager.TemporaryOptions.SingleOrDefault(t => t.Name == tOptName);
 			
-			try{ await EmbedUtils.SendEmbedAsync(msg, builder.Build()); return true; }
-			catch { return false; }
+			// Envia o embed
+			DiscordEmbedBuilder builder = EmbedUtils.SuccesBuilder
+			   .WithThumbnail(item.ImageLink)
+			   .WithDescription($"o item {item.Name} {(tOptName == "none" ? "" : $"({tOption.Name})")}\n" +
+					"foi comprado com sucesso!\n\n" +
+					$"**Item:** {item.Name} {(tOptName == "none" ? "" : tOption.Name)}\n" +
+					$@"**Valor:** {currency.EmojiName} {Math.Ceiling((item.DefValue / currency.BaseDivider)
+					  * (item.Temporary ? tOption.BaseMultiplier : 1))}")
+			   .WithFooter("Carteira: 💵 000 • 💎 000", "https://twemoji.maxcdn.com/2/72x72/1f4b0.png")
+			   .WithTimestamp(DateTime.Now);
+
+			return new DiscordMessageBuilder()
+			   .WithEmbed(builder)
+			   .AddComponents(new DiscordButtonComponent(
+					ButtonStyle.Secondary, $"loja_item_{itemName}_none",
+					"Retornar", false, new DiscordComponentEmoji("↪")));
+		}
+
+		private static async Task<DiscordMessageBuilder> ShowError(
+			Exception err, DiscordUser user, ShopItem item, string tOptName = "none") {
+			DiscordEmbedBuilder builder = EmbedUtils.ErrorBuilder
+			   .WithThumbnail(item.ImageLink)
+			   .WithDescription($"Infelizmente algo deu errado durante a compra desse item\n\n" +
+					$"**Item:** {item.Name} {(tOptName == "none" ? "" : $"({tOptName})")}\n" +
+					$"**Erro:** {err.TargetSite} => {err.GetType()}: `{err.Message}`\n\n```{err.StackTrace}```");
+
+			return new DiscordMessageBuilder().WithEmbed(builder);
+		}
+	
+		private static DiscordMessageBuilder ShowError(Exception err) {
+			DiscordEmbedBuilder builder = EmbedUtils.ErrorBuilder
+			   .WithDescription($"Infelizmente algo deu errado durante a execução do comando\n\n" +
+					$"**Erro:** {err.TargetSite} => {err.GetType()}: `{err.Message}`\n\n```{err.StackTrace}```");
+
+			return new DiscordMessageBuilder().WithEmbed(builder);
 		}
 		// ----------------------------------------------------------> INTERATIVIDADE <-----------------------------------------------------------------
 	}
