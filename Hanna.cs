@@ -112,6 +112,7 @@ namespace Hanna {
 					   .GrantRoleAsync(args.Guild.Roles[roleId], "Member role");
 
 				DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+				   .WithColor(new DiscordColor("#ff851d"))
 				   .WithAuthor(args.Member.DisplayName, null, args.Member.AvatarUrl)
 				   .WithDescription($"{args.Member.Mention} acaba de entrar, gostosuras ou travessuras?!")
 				   .WithImageUrl(
