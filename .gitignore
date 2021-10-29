@@ -343,3 +343,4 @@ healthchecksdb
 /Properties/launchSettings.json
 .vscode/*
 .idea/*
+/Properties

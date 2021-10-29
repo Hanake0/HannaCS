@@ -1,30 +1,64 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <StartupObject>Hanna.Program</StartupObject>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	 
+	<!--
+	<PublishSingleFile>true</PublishSingleFile>
+	<SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	<PublishReadyToRun>true</PublishReadyToRun>
+	-->
+	  
+	<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>.</DockerfileContext>
+    
+	<AnalysisLevel>5.0</AnalysisLevel>
+    
+	<Authors>Hanake0</Authors>
+    <Company>WaifusClub</Company>
+    <Product>HannaBot</Product>
+    <RepositoryUrl>https://github.com/Hanake0/HannaCS</RepositoryUrl>
+    <ApplicationIcon>hanna.ico</ApplicationIcon>
+    <UserSecretsId>a7c0c02f-75f3-4ca6-8a04-367d1be96220</UserSecretsId>
   </PropertyGroup>
+  
+	  
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
+	<PlatformTarget>x64</PlatformTarget>
+	<Optimize>true</Optimize>
   </PropertyGroup>
+	
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	<PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  
+	
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.1"/>
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.1"/>
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.1"/>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1"/>
+      <PackageReference Include="DSharpPlus" Version="4.1.0" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.1.0" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Cosmos" Version="5.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.11">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
+  </ItemGroup>
+	
+		
+  <ItemGroup>
+    <Folder Include="Shop\Itens\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Shop\Itens\"/>
+    <Compile Remove="bin\**" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="bin\**"/>
+    <EmbeddedResource Remove="bin\**" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Remove="bin\**"/>
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="bin\**"/>
+    <None Remove="bin\**" />
   </ItemGroup>
 </Project>
